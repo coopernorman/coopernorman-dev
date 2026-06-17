@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# headless-render temp + local preview artifacts
+_edge*/
+_preview*.png
+
+# host CLIs
+.vercel
+.netlify
+node_modules/

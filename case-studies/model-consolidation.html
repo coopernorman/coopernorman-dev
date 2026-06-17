@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One model, not seven: letting backtests kill my own hypotheses — Cooper Norman</title>
+<meta name="description" content="TL;DR While building ShareShark's options-pricing engine I twice hypothesized that more specialized models would price better — first a separate model per ">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
+    <span class="links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </span>
+  </div>
+</nav>
+<article class="article">
+  <div class="wrap">
+    <a class="back" href="../index.html#work">← All work</a>
+<h2>TL;DR</h2>
+<p>While building ShareShark's options-pricing engine I twice hypothesized that <strong>more specialized models</strong> would price better — first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: <strong>one robust model covering the whole short-dated range wins — on accuracy <em>and</em> on production simplicity.</strong> I shipped the single model and deleted the rest.</p>
+<hr />
+<h2>Why it was tempting</h2>
+<p>On a prediction platform the price <em>is</em> a probability, so pricing quality is everything — and two "more clever = better" instincts looked obviously right:</p>
+<ol>
+<li><strong>Timing windows.</strong> Weekend and after-hours prices lean on Bitcoin/futures proxies captured at specific snapshots (Fri 4pm, Sat 8am, Sun 8am, Sun 6:45pm) versus a normal weekday 4pm close. Each window carries different information → so train a model per window.</li>
+<li><strong>Horizon specialization.</strong> An option expiring <em>today</em> (1 day to expiry) behaves differently from one expiring in a week → so a dedicated end-of-day (EOD) specialist should beat a generalist on EOD contracts.</li>
+</ol>
+<p>Both are reasonable. Both are exactly the kind of complexity you add by <em>assuming</em> instead of <em>measuring</em>. So I measured.</p>
+<h2>Experiment 1 — five timing-window models</h2>
+<p>I trained five separate LightGBM models — one per snapshot window — each with its own feature set, its own data pipeline, and snapshot-specific "time since last close" features, routed in production by the active snapshot. Then I backtested them <strong>apples-to-apples on the same held-out test set (~1.2M rows):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Test log-loss</th>
+<th>vs. Black-Scholes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Single general model</strong></td>
+<td><strong>0.1625</strong></td>
+<td><strong>−19.1%</strong> (best)</td>
+</tr>
+<tr>
+<td>Sat 8am</td>
+<td>0.1636</td>
+<td>−18.5%</td>
+</tr>
+<tr>
+<td>Normal weekday</td>
+<td>0.1640</td>
+<td>−18.3%</td>
+</tr>
+<tr>
+<td>Friday 4pm</td>
+<td>0.1643</td>
+<td>−18.2%</td>
+</tr>
+<tr>
+<td>Sun 8am</td>
+<td>0.1647</td>
+<td>−17.9%</td>
+</tr>
+<tr>
+<td>Sun 6:45pm</td>
+<td>0.1650</td>
+<td>−17.8%</td>
+</tr>
+</tbody>
+</table>
+<p>The five "specialists" differed from each other by only <strong>0.0014 log-loss</strong> — and the single general model beat every one of them (also best on AUC 0.980 and calibration error 0.0025). An ablation put the Bitcoin-timing signal at <strong>~0.24% of log-loss — roughly 1% of the total edge over Black-Scholes.</strong></p>
+<p><strong>Verdict:</strong> the timing window barely mattered. Five models meant five data pipelines and five points of failure, for nothing. Collapsed to one. (I kept a <em>single</em> lightweight Bitcoin freshness feed for weekend pricing — worth it; five models were not.)</p>
+<h2>Experiment 2 — the EOD specialist (a clever augmentation that still lost)</h2>
+<p>End-of-day contracts (expiring today) really are a different regime, so I built an EOD-specific model. The clever part: real DTE-1 training data is scarce, so I <strong>manufactured it.</strong> I took real DTE 2–5 options, re-labeled them against the <em>next</em> trading day's close (handling weekends/holidays via an exchange calendar), and <strong>regenerated every Greek at T = 1 day</strong> — recomputing delta/gamma/theta/vega/rho, the IV-derived features, and the moneyness buckets — to turn each into a synthetic "DTE-1" sample. That multiplied the DTE-1 training set several-fold (~3.4M rows). I tried two architectures: direct prediction, and a Black-Scholes-<strong>residual</strong> model (LightGBM learning corrections on top of the BS price).</p>
+<p>The honest result: <strong>every EOD variant lost to plain Black-Scholes on the real test set.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Test log-loss</th>
+<th>vs. Black-Scholes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Black-Scholes baseline</strong></td>
+<td><strong>0.1456</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>EOD (direct, best)</td>
+<td>0.1471</td>
+<td>+0.0015 (worse)</td>
+</tr>
+<tr>
+<td>EOD (BS-residual, lean)</td>
+<td>0.1524</td>
+<td>+0.0068 (worse)</td>
+</tr>
+<tr>
+<td>EOD (BS-residual, full)</td>
+<td>0.2064</td>
+<td>blew up</td>
+</tr>
+</tbody>
+</table>
+<p>DTE-1 is the <em>one</em> regime where Black-Scholes is already strongest, so a learned model had almost no room to add value — and the heavy residual variant destabilized completely. The augmentation was genuinely clever; the conclusion was still <strong>"don't ship this."</strong></p>
+<blockquote>
+<p>The trap I had to avoid: on its <em>own</em> synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss — but that's an easier task scored on different data. The <em>fair</em> comparison is EOD vs. Black-Scholes on the real test set, where it lost. Knowing which comparison is honest is the whole game.</p>
+</blockquote>
+<h2>What won: one robust short-DTE model</h2>
+<p>A single model covering the full short-dated range (~DTE 1–5/1–7) on <strong>real</strong> expiry labels — what shipped as the production EOW model. It won on every axis:</p>
+<ul>
+<li><strong>Accuracy &amp; calibration (backtest):</strong> AUC <strong>0.979</strong>, log-loss <strong>0.171</strong>, expected-calibration-error <strong>0.0021</strong> — versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.</li>
+<li><strong>Production simplicity:</strong> one model, one data pipeline, no snapshot-routing logic, no synthetic-data step. Easier to serve in real time, far fewer failure modes, one thing to monitor.</li>
+</ul>
+<p>On top of it sits a separate correlation-aware <strong>multi-leg pricer</strong> (a t-copula Monte-Carlo overlay for correlated multi-leg entries) — but the <em>pricing brain</em> is the one model. (This is the same model family whose weekend train/serve-skew bug I later caught and fixed — see the <a href="quantshark.html">QuantShark case study</a>.)</p>
+<h2>What this demonstrates</h2>
+<ul>
+<li><strong>Calibrated experimentation over intuition.</strong> I had a plausible thesis twice, built it, measured it on held-out data, and let the result overrule me — instead of shipping complexity because it felt smart.</li>
+<li><strong>Simplicity as a feature, not a compromise.</strong> The winning architecture was also the simplest to operate. That alignment is worth protecting.</li>
+<li><strong>Knowing which comparison is fair.</strong> The flattering synthetic-data number would have justified the wrong decision; the honest baseline comparison killed it.</li>
+</ul>
+<h2>Validation methodology</h2>
+<p>Temporal split (train on earlier data, test on a later held-out period); the <em>same</em> held-out test set across compared models; log-loss, AUC, and calibration error (ECE) all reported; Black-Scholes as the baseline everything is measured against. Where a comparison wasn't apples-to-apples (synthetic DTE-1 vs. real), I flag it rather than quote the flattering figure.</p>
+<h2>Tech stack</h2>
+<p>Python · LightGBM · scikit-optimize (Bayesian search) · SciPy / NumPy (vectorized Black-Scholes &amp; Greek regeneration) · pandas · temporal cross-validation.</p>
+<h2>Honest notes</h2>
+<p>All figures are backtest/validation on historical data; ShareShark operated pre-launch / low-traffic, so these are model-quality results, not realized P&amp;L. "Short-DTE" appears as DTE 1–5 in the comparison files and DTE 1–7 in the deployment plan. The synthetic-augmentation multiple is approximate. The multi-leg pricer is an overlay on the single model, not a second pricing model.</p>
+  </div>
+</article>
+<footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
+</body>
+</html>

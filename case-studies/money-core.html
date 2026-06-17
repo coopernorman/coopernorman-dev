@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shipping a regulated-money stack — solo — Cooper Norman</title>
+<meta name="description" content="TL;DR The hard part of a real-money platform isn't the database — it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, t">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
+    <span class="links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </span>
+  </div>
+</nav>
+<article class="article">
+  <div class="wrap">
+    <a class="back" href="../index.html#work">← All work</a>
+<h2>TL;DR</h2>
+<p>The hard part of a real-money platform isn't the database — it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated <strong>ShareShark's</strong> entire money-and-compliance stack solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing — including a fix for the false-positives that wrongly block legitimate users.</p>
+<h2>The problem</h2>
+<p>On a money platform, the expensive failures live at the <strong>seams</strong> — where your code meets a payment processor, an identity vendor, a geolocation API, a webhook you didn't send. Real cash leaving to an unverified, geo-ineligible, or fraudulent user is the failure that actually costs you. So the design rule was simple: <strong>every external rail fails closed</strong>, and money only moves once every check has passed.</p>
+<h2>The ACH payout lifecycle (idempotent, fail-closed)</h2>
+<p>Withdrawals move real cash through an ACH provider (Payliance) as a state machine — REQUESTED → PENDING → SENT, with FAILED / RETURNED branches — gated by manual approval, with <strong>encrypted bank details</strong> and <strong>exactly-once auto-refund</strong> when the provider fails or the bank returns a transfer. The provider doesn't push reliable webhooks, so the system <strong>reconciles by idempotent status-polling</strong>: it can run reconciliation twice and never double-credit or double-refund.</p>
+<p><img alt="ACH payout lifecycle" src="../assets/img/payout_state_machine.png" /></p>
+<h2>The clever part: geofencing that doesn't punish real users</h2>
+<p>State-by-state eligibility means IP geolocation — but <strong>strict IP gating has a brutal failure mode</strong>. Cellular carriers route users through CGNAT pools that can resolve to a neighboring (sometimes ineligible) state, and VPN-detection false-fires on ordinary privacy browsers. Naive geofencing quietly blocks <em>legitimate</em> users on their phones.</p>
+<p>So I built a tiered pipeline: a fast local MaxMind lookup first, a paid precision API only as a second opinion (to conserve credits), and an <strong>authoritative browser-GPS override</strong> that settles eligibility regardless of what the IP says — plus confidence-tiered VPN handling (hard-block relay/Tor, log-but-allow soft signals). Compliance stays strict; real users stop getting wrongly turned away. <em>Keeping the gate tight without locking out real customers is the part most people get wrong.</em></p>
+<h2>Identity, encryption, and tax</h2>
+<ul>
+<li><strong>KYC (Veriff)</strong> — government-ID + selfie/liveness, triggered at identity, tax, and velocity thresholds (plus random audit), with <strong>fail-closed, constant-time HMAC</strong> webhook verification so a forged "approved" callback can't slip through.</li>
+<li><strong>Encryption at rest</strong> — AES-256-GCM for SSNs and bank details; masked display everywhere.</li>
+<li><strong>Tax</strong> — W-9 collection at the IRS reporting threshold, feeding a year-end 1099 pipeline.</li>
+<li><strong>Fraud / AML</strong> — device fingerprinting for multi-account detection, plus velocity caps, risk holds, and suspicious-activity logging.</li>
+</ul>
+<h2>Payments that are safe to retry</h2>
+<p>Settlement and refunds run on schedules, so they have to be safe to run more than once. Every money-moving step is <strong>idempotent</strong> — a completed payout or an issued refund can't be issued again — so a retry, an overlapping job, or a provider hiccup never double-pays.</p>
+<h2>Validation &amp; testing</h2>
+<p>Focused tests on the highest-risk money paths (payouts, refunds, redemption gating), and <strong>separate staging and production</strong> environments so changes were exercised before they could touch real funds.</p>
+<h2>What this demonstrates</h2>
+<ul>
+<li><strong>Regulated-money fluency</strong> — ACH, KYC/AML, tax, encryption, geofencing and fraud — <em>integrated and shipped</em>, not theorized.</li>
+<li><strong>Integration discipline</strong> — a dozen third-party rails wired so each one fails closed.</li>
+<li><strong>Product-minded compliance</strong> — keeping the gate strict without blocking legitimate users (the geo-rescue is the proof).</li>
+</ul>
+<h2>Tech stack</h2>
+<p>Python · Django · Django REST Framework · PostgreSQL · Celery / Redis · AES-256-GCM · Payliance (ACH) · Veriff (KYC) · MaxMind (geolocation) · deployed on AWS behind Nginx/Gunicorn.</p>
+<h2>Honest notes</h2>
+<p>ShareShark operated pre-launch / low-traffic, so this is <strong>design-and-integration</strong> work, not "battle-tested at N TPS." Third-party services (Payliance, Veriff, MaxMind, the fingerprinting vendor) do real work; the contribution is the integration design, the fail-closed and idempotent wiring, the geolocation-rescue insight, and the breadth of compliance shipped by one person.</p>
+  </div>
+</article>
+<footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
+</body>
+</html>
