@@ -14,7 +14,8 @@ import markdown
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PAGES = {"money_core": "money-core", "quantshark": "quantshark",
-         "model_consolidation": "model-consolidation", "agents_suite": "agents-suite"}
+         "model_consolidation": "model-consolidation", "agents_suite": "agents-suite",
+         "data_pipeline": "data-pipeline"}
 NOTE_PREFIXES = ("*Portfolio case study for", "*To produce", "*Figures embedded above",
                  "*Diagrams to produce", "*Portfolio case study")
 

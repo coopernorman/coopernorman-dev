@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The hard part was never the model: building a leak-proof data pipeline from six vendors — Cooper Norman</title>
+<meta name="description" content="TL;DR Everyone talks about the model. In practice, the LightGBM model that prices ShareShark's options is the tractable part: an off-the-shelf library and ">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
+    <span class="links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </span>
+  </div>
+</nav>
+<article class="article">
+  <div class="wrap">
+    <a class="back" href="../index.html#work">← All work</a>
+<h2>TL;DR</h2>
+<p>Everyone talks about the model. In practice, the LightGBM model that prices ShareShark's options is the <em>tractable</em> part: an off-the-shelf library and a tuning loop that, however careful, was a well-understood problem. (That tuning was real work in its own right, see the <a href="quantshark.html">QuantShark case study</a>; the point is it was a <em>solved kind</em> of problem.) The part that actually decided whether the model worked was the <strong>data pipeline that fed it</strong>: six data sources from three different vendors, three incompatible timestamp formats, well over a million API pulls, and a wall of point-in-time-correctness rules built to close every leakage path I could find, so the model never trained on information it wouldn't have had at the time. That pipeline is <strong>342 tickers, ~8 years (2018-2026), 21.5M training rows, 167 engineered features</strong>, and it is where the real engineering lives. This case study is about the unglamorous 80%, because that 80% is the moat.</p>
+<hr />
+<h2>The thesis</h2>
+<p>A model is only as honest as the data behind it. You can have a well-tuned gradient-boosted model and still ship something worthless, if even one feature quietly leaks a future value into a training row. On a real-money pricing product, that is not a small bug: a model that "knows" the answer in backtest looks brilliant and then loses money the moment it goes live on data it hasn't already peeked at.</p>
+<p>So the work that mattered most wasn't choosing an algorithm. It was: <strong>get clean data from messy vendors, line it up across time without leaking, and prove the lineup is honest.</strong> Three layers, each with its own traps.</p>
+<h2>Layer 1: acquisition, where the data fights back</h2>
+<p>Six sources, and not one of them agreed on anything:</p>
+<ul>
+<li><strong>Options chains, stock prices, earnings</strong> come from one market-data API as compressed column-arrays (parallel <code>t</code>/<code>c</code> arrays you zip yourself, timestamps as Unix epoch seconds).</li>
+<li><strong>28 ETFs</strong> (broad market, sectors, credit, growth, small-cap) come from a <em>second</em> vendor with nanosecond ISO-8601 timestamps and a stacked long format.</li>
+<li><strong>Treasury yields and fed funds</strong> come from a <em>third</em> source (FRED), which encodes market holidays as a literal <code>.</code> character in an otherwise-numeric column.</li>
+</ul>
+<p>That is three timestamp formats and three schema conventions before a single feature exists. The ETF cleaner alone exists mostly to reshape one vendor's stacked feed into the exact wide column layout (<code>{SYMBOL}_open/high/low/close/volume</code>) the rest of the pipeline already expected, a pure schema-reconciliation job.</p>
+<p><strong>Scale forces real engineering.</strong> The options pull dominates everything: 342 tickers, two option chains each (a weekly and a longer-dated one), every trading day for eight years is well over a million HTTP requests on trading days alone. You cannot run that naively and hope. So the collector has:</p>
+<ul>
+<li><strong>Retry loops on every source</strong> (bounded attempts, fixed backoff), catching both network errors and JSON-decode failures on truncated bodies, with <strong>per-ticker isolation</strong> so one dead ticker returns an empty frame instead of killing the whole run.</li>
+<li><strong>Batch sharding</strong> (<code>--batch N --total-batches M</code>) that splits the ticker universe evenly across processes, so the million-call job can fan out across machines.</li>
+<li><strong>Resume checkpoints</strong> that read the dates already on disk and restart from the day after, so a crash four hours in costs four hours, not the whole run.</li>
+</ul>
+<p>None of that is glamorous. All of it is the difference between a pipeline that finishes and one that doesn't.</p>
+<h2>Layer 2: cleaning, where "missing" has ten meanings</h2>
+<p>Raw market data is full of values that <em>look</em> like numbers but mean "no data," and getting that wrong is how you poison a model.</p>
+<p><strong>The weekend gap.</strong> Markets close, but options still need to be priced over the weekend. Treasury and fed-funds rates simply don't exist on Saturdays, and FRED writes holidays as <code>.</code>. The fix is disciplined forward-fill: coerce the <code>.</code> to <code>NaN</code>, then carry the last <em>known</em> rate forward across the gap (never interpolate, which would pull a future value backward). The daily effective fed-funds rate is used as-is; the separate monthly fed-funds series is resampled to daily and forward-filled, broadcasting one figure across the month without ever looking ahead.</p>
+<p><strong>The trading calendar is not the calendar.</strong> Every earnings-timing feature is counted in <em>trading days</em> off the real NYSE schedule (via <code>pandas_market_calendars</code>), not naive date arithmetic. "Five days before earnings" has to skip weekends and holidays or the feature is wrong.</p>
+<p><strong>Zero is not missing (this one cost me a production bug).</strong> 17 option features depend on live bid/ask, which the vendor returns as <code>0.0</code> when the market is closed. In the training history, <code>0.0</code> had only ever appeared as a <em>real</em> deep-in-the-money value, so the model learned <code>0.0 means near-certain</code>. On weekends, <code>0.0</code> meant <em>missing</em>. Same value, opposite meaning. That single ambiguity mispriced near-the-money weekend contracts at 76-83% when the truth was 42%. (The full diagnosis and fix is its own story in the <a href="quantshark.html">QuantShark case study</a>; the lesson here is that the <em>data layer</em> is where that class of bug is born and where it has to be killed.)</p>
+<p><strong>Recompute, don't trust.</strong> Vendor-supplied Greeks and implied vol are inconsistent, so the pipeline recomputes them: Greeks from the closed-form Black-Scholes derivatives, implied vol by inverting Black-Scholes per row with Brent's-method root-finding (bracketed search from a small positive floor up to 1000% vol, since Black-Scholes degenerates exactly at zero vol). Every one of those functions guards the singularities (<code>T&lt;=0</code>, <code>sigma</code> near zero) and returns a clean null rather than an <code>inf</code> that would silently corrupt a feature. The Black-Scholes probability feature is vectorized across the whole frame, roughly 100x faster than a row-wise <code>apply</code>, because at 21.5M rows the naive version simply doesn't finish.</p>
+<h2>Layer 3: leakage prevention, the whole game</h2>
+<p>This is the part that separates a financial ML pipeline from a generic one. Three mechanisms, all aimed at the same enemy: a training row that knows something it couldn't have known at the time.</p>
+<p><strong>Point-in-time joins.</strong> When a weekend option row needs the latest stock data, a naive join could grab the <em>next</em> trading day's prices, a future leak. Instead it uses <code>merge_asof(direction="backward")</code>, which pulls the most recent <em>prior</em> trading day and nothing newer, and it fills only genuinely missing cells so real data is never overwritten.</p>
+<p><strong>The earnings reaction-date guard.</strong> An earnings report released after the close on Monday isn't "known" to the market until Tuesday. A separate pass computes the actual market-reaction date (same session for before-open reports, the next trading day for after-close reports) and only flips the "has the market seen this earnings event" flag on from that date forward. That is textbook point-in-time correctness, and skipping it is one of the most common silent leaks in financial ML.</p>
+<p><strong>The label can never share a row with its features.</strong> The outcome (did the option finish in-the-money) lives only on the expiry-day (<code>dte==0</code>) row. A first pass scans every file reading just three columns, extracts those expiry outcomes into a cached label map, and a second pass maps that label back onto the 1-to-5-days-to-expiry feature rows. Features are always pre-expiry; the label is always the future outcome; they are physically separated by construction. Contracts that don't have both a valid expiry row and a pre-expiry row are dropped, so there are no half-formed training pairs.</p>
+<p><strong>Purged and embargoed splitting, with a self-check.</strong> The train/validation/test split is not a random shuffle (which would be catastrophic for time-series) and not even a plain date cut. It is <em>purged and embargoed</em>:</p>
+<ul>
+<li>An option is assigned to a split only if it was both <em>observed</em> and <em>expired</em> before the boundary, so no contract's lifetime straddles the cut and leaks its outcome across it (the purge).</li>
+<li>A 7-day no-man's-land before each boundary is dropped entirely, so autocorrelation can't leak information across the seam (the embargo).</li>
+<li>Then the pipeline measures the actual gap between the last training date and the first validation date and asserts it, printing <code>PASS, no temporal leakage</code> only if the gap holds. The pipeline checks its own honesty.</li>
+</ul>
+<h2>Schema discipline (so 342 tickers stay identical)</h2>
+<p>A subtle failure mode at this scale is <em>drift</em>: ticker 200's feature table quietly having a different shape than ticker 1's. The pipeline pins this down with a single config as the source of truth: a 167-feature manifest with expected counts the build self-validates against, ~40 domain-aware clip rules (an open-interest concentration ratio bounded to [0,1], an implied-to-realized vol ratio kept in a sane positive range, and so on) instead of a blanket clip, a strict column whitelist so raw inputs like bid/ask/volume are used for computation and then <em>deliberately excluded</em> from the model, and a float32 downcast that halves disk and memory across 21.5M rows. Every ticker comes out the other end with the exact same schema, or the build complains.</p>
+<h2>What this demonstrates</h2>
+<ul>
+<li><strong>Data-centric judgment.</strong> I treated the data, not the model, as the product, because in applied ML it is.</li>
+<li><strong>Point-in-time correctness end to end.</strong> Backward <code>merge_asof</code>, earnings reaction-date logic, expiry-only labels, and a purged-and-embargoed split that verifies itself. This is the hardest thing to get right in financial ML and the easiest to get silently wrong.</li>
+<li><strong>Engineering at awkward scale.</strong> Retries, sharding, resume checkpoints, vectorization, float32, and a self-validating schema, the things that make a million-call, 21.5M-row pipeline actually finish and stay consistent.</li>
+<li><strong>Vendor reality.</strong> Three sources, three formats, holidays as dots, zeros that mean missing. Real data is hostile, and most of the work is making it behave.</li>
+</ul>
+<h2>Tech stack</h2>
+<p>Python · pandas (<code>merge_asof</code>, resample/ffill, groupby) · NumPy (vectorized Black-Scholes &amp; Greeks) · SciPy (<code>brentq</code> IV solver, <code>norm</code>) · pandas_market_calendars (NYSE trading calendar) · multi-vendor REST ingestion with retry/backoff/resume · purged + embargoed temporal splitting.</p>
+<h2>Honest notes</h2>
+<p>This describes the offline training-data pipeline; the live serving path reuses the same calculation utilities so training and production stay consistent. All figures (342 tickers, 167 features, 21.5M rows, ~8-year span) are dataset facts, not performance claims; the model-quality results live in the <a href="quantshark.html">QuantShark</a> and <a href="model-consolidation.html">model-consolidation</a> case studies. The heavy numerical lifting uses standard libraries; the contribution is the acquisition resilience, the cleaning rules, the leakage prevention, and the schema discipline that hold it all together.</p>
+  </div>
+</article>
+<footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
+</body>
+</html>
