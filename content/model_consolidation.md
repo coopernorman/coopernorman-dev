@@ -12,7 +12,7 @@ While building ShareShark's options-pricing engine I twice hypothesized that **m
 ## Why it was tempting
 On a prediction platform the price *is* a probability, so pricing quality is everything, and two "more clever = better" instincts looked obviously right:
 
-1. **Timing windows.** Weekend and after-hours prices lean on Bitcoin/futures proxies captured at specific snapshots (Fri 4pm, Sat 8am, Sun 8am, Sun 6:45pm) versus a normal weekday 4pm close. Each window carries different information → so train a model per window.
+1. **Timing windows.** Weekend and after-hours prices lean on Bitcoin snapshots captured at specific times (Fri 4pm, Sat 8am, Sun 8am, Sun 6:45pm) versus a normal weekday 4pm close. Each window carries different information → so train a model per window.
 2. **Horizon specialization.** An option expiring *today* (1 day to expiry) behaves differently from one expiring in a week → so a dedicated end-of-day (EOD) specialist should beat a generalist on EOD contracts.
 
 Both are reasonable. Both are exactly the kind of complexity you add by *assuming* instead of *measuring*. So I measured.
@@ -33,7 +33,7 @@ The five "specialists" differed from each other by only **0.0014 log-loss**, and
 
 ![Five timing-window specialists vs. one general model, same 1.2M held-out test rows (backtest)](figures/five_specialists_vs_one_real.png)
 
-**Verdict:** the timing window barely mattered. Five models meant five data pipelines and five points of failure, for nothing. Collapsed to one. (I kept a *single* lightweight Bitcoin freshness feed for weekend pricing, worth it; five models were not.)
+**Verdict:** the timing window barely mattered, and it's worth saying why. That overnight/weekend signal ideally wants live index-futures data, but a commercial futures feed was far too expensive for a startup to justify, so the models leaned on Bitcoin snapshots, the one liquid market that trades 24/7, as a free proxy for broad risk sentiment while equities were closed. For a ~1% slice of the edge, five models meant five data pipelines and five points of failure, for nothing. I collapsed them into one and kept a single lightweight Bitcoin freshness feed for weekend pricing; that was worth it, the five were not.
 
 ## Experiment 2: the EOD specialist (a clever augmentation that still lost)
 End-of-day contracts (expiring today) really are a different regime, so I built an EOD-specific model. The clever part: real DTE-1 training data is scarce, so I **manufactured it.** I took real DTE 2–5 options, re-labeled them against the *next* trading day's close (handling weekends/holidays via an exchange calendar), and **regenerated every Greek at T = 1 day** (recomputing delta/gamma/theta/vega/rho, the IV-derived features, and the moneyness buckets) to turn each into a synthetic "DTE-1" sample. That multiplied the DTE-1 training set several-fold (3.4M rows). I tried two architectures: direct prediction, and a Black-Scholes-**residual** model (LightGBM learning corrections on top of the BS price).
