@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naive independence is an arbitrage: pricing correlated multi-leg predictions with a t-copula — Cooper Norman</title>
+<meta name="description" content="TL;DR On ShareShark, users could combine several stock predictions into one multi-leg entry that only pays if all legs win. The obvious way to price that i">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
+    <span class="links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </span>
+  </div>
+</nav>
+<article class="article">
+  <div class="wrap">
+    <a class="back" href="../index.html#work">← All work</a>
+<h2>TL;DR</h2>
+<p>On ShareShark, users could combine several stock predictions into one multi-leg entry that only pays if <em>all</em> legs win. The obvious way to price that is to multiply the per-leg probabilities together. That is also a bug you can lose real money to: stocks are correlated, so picking three tech names all "higher" is really one prediction on tech, not three independent ones, and the joint probability of all of them winning is far higher than the product. Multiplying anyway overpays the user on exactly the entries a sharp player would build. I priced these with a <strong>Student-t copula Monte Carlo</strong> engine that estimates the <em>joint</em> probability under a regime-aware, shrinkage-stabilized correlation matrix. In a six-year backtest it stays margin-positive in every strategy bucket, and it widens the margin most precisely where naive pricing leaks it: on correlated, same-direction stacks.</p>
+<hr />
+<h2>The problem: why multiplying probabilities is wrong</h2>
+<p>The single-leg model (<a href="quantshark.html">QuantShark</a>) gives a calibrated probability that one stock finishes on the predicted side. For a multi-leg entry, you need the probability that <em>every</em> leg wins at once. The naive answer multiplies them:</p>
+<blockquote>
+<p>P(all win) = p1 x p2 x ... x pN</p>
+</blockquote>
+<p>That is only correct if the legs are independent. They are not. If a user picks AAPL, MSFT, and NVDA all "higher," those three move together: one good day for tech lifts all of them. So the real probability of all three winning is <strong>much higher</strong> than the product of the three. Price off the product and you quote odds that are too generous, and a player who simply stacks correlated same-direction legs earns positive expected value against the platform. The whole job of this engine is to compute the correlation-aware joint probability so that gap never opens.</p>
+<p>How big is the gap? On the full backtest, the copula's estimated joint probability of a same-sector, same-direction combination is a <strong>median of ~2.3x</strong> the naive independence product. (On the realistic favorites-only set the effect is much smaller, a median near 1.0x, because high-probability legs leave less room for correlation to move the joint; the gap is largest on lower-probability combinations, which is where independence pricing is most exposed.) Independence pricing would hand that factor to the user.</p>
+<p><img alt="Naive independence underprices correlated multi-leg entries (full backtest, 17,404 priced combinations)" src="../assets/img/parlay_correlation_impact.png" /></p>
+<h2>The approach: a t-copula Monte Carlo</h2>
+<p>A copula is the standard quant-finance tool for this: it lets you keep each leg's own probability exactly as the model gave it, while injecting a correlation structure between them. The engine prices each entry like this:</p>
+<ol>
+<li><strong>Build a direction-adjusted correlation sub-matrix</strong> for the legs. Two "higher" predictions on correlated stocks get positive correlation; a "higher" and a "lower" on the same correlated pair get <em>negative</em> effective correlation (one wins when the other tends to lose). This is a sign flip on the off-diagonals, and after it the matrix can lose positive-definiteness, so a small eigenvalue-clip repair runs before the Cholesky.</li>
+<li><strong>Simulate correlated outcomes with heavy tails.</strong> Draw correlated normals via the Cholesky factor, then scale them by a chi-square mixing term to turn them into <strong>Student-t</strong> samples (degrees of freedom = 5). The t, rather than a Gaussian copula, is deliberate: heavier tails mean more joint-tail dependence, so the engine assumes legs are <em>more</em> likely to crash together than a normal would, which is the conservative choice for the platform.</li>
+<li><strong>Threshold into win/lose</strong> by pushing the t-samples through the t-CDF to uniforms and comparing against each leg's probability, then count the fraction of simulations where all legs win. That fraction is the joint probability.</li>
+<li><strong>Price conservatively against Monte Carlo noise.</strong> Instead of using the raw simulated estimate, the engine uses the estimate plus 1.96 standard errors, a one-sided 97.5% upper bound on the joint probability. Sampling noise can therefore only ever make the quote <em>less</em> generous, never accidentally underprice it. Simulation counts scale with leg count (100k for 2 legs up to 2M for 5-6) so the estimate stays stable even as joint probabilities shrink.</li>
+</ol>
+<h2>The hard part: estimating the correlation matrix</h2>
+<p>A copula is only as good as the correlation matrix behind it, and a raw sample correlation over a few hundred stocks is noisy and unstable. The matrix build is where most of the real work is:</p>
+<ul>
+<li><strong>Ledoit-Wolf shrinkage</strong> pulls the noisy sample covariance toward a structured target, which is the standard fix for estimating a big covariance from limited data.</li>
+<li><strong>Blended lookback windows.</strong> Three rolling windows (about 3 months, 6 months, and 1 year) are weighted 0.50 / 0.30 / 0.20, so the estimate is responsive to recent regime shifts without being whipsawed by them.</li>
+<li><strong>Sector correlation floors, as an explicit anti-exploitation control.</strong> Same-sector pairs are floored at 0.40, structurally related sectors at 0.30, everything else at 0.05. The point is to <em>never assume independence</em> between two names that obviously co-move, even if a particular sample window happened to show low correlation. This is the single most important guard against a player gaming the pricer.</li>
+<li><strong>Volatility-regime uplift.</strong> Correlations spike in a crisis (everything sells off together). When 30-day volatility is above its 90th percentile, off-diagonal correlations are inflated by up to 15%, scaled by how stressed the regime is, using only data available at the time.</li>
+<li><strong>Nearest-positive-definite repair.</strong> Applying floors and uplift can break the matrix's positive-definiteness, which would make the copula unsamplable, so a Higham projection snaps it back to the nearest valid correlation matrix.</li>
+</ul>
+<p>The production matrix covers <strong>334 stocks</strong>, and the backtest replays <strong>73 monthly snapshots from 2020 through 2026</strong>, each rebuilt using only data available as of that month.</p>
+<h2>Does it work?</h2>
+<p>The validation is honest about what it is: synthetic multi-leg entries built from the real model's per-leg probabilities on the held-out test set, priced against the historical correlation matrices, then scored on the realized outcomes. No live money is involved. The realistic test models actual user behavior: only favorites (per-leg probability above 0.30), with legs added until the payout would breach the 20x cap.</p>
+<ul>
+<li><strong>Better calibrated than naive.</strong> Across 9,039 favorites-only entries, copula log-loss is <strong>0.486 vs 0.488</strong> naive, and expected calibration error is <strong>0.014 vs 0.022</strong>. Modest, because on favorites the correlation effect is smaller, but it moves the right direction on both proper-scoring and calibration.</li>
+<li><strong>Margin-positive everywhere, and tightest where it matters.</strong> Margin here is the negative of the user's expected value per $1 of entry, so positive margin means the price is not exploitable. Across every bucket I sliced (by sector mix and by leg count, 2 through 5 legs) the copula keeps that margin positive. Crucially, on the same-sector same-direction "exploit" entries (n=1,763), it recovers an extra <strong>0.043 per $1</strong> versus naive pricing, exactly the place where independence pricing thins toward exploitable.</li>
+</ul>
+<p><img alt="The copula restores margin where naive pricing leaks it (favorites-only backtest, 9,039 entries)" src="../assets/img/parlay_margin.png" /></p>
+<p>The honest nuance: the copula is conservative <em>everywhere</em> by design (the CI upper bound, the cross-sector floor, and the regime uplift all nudge it the same way), so it tightens cross-sector entries a little too. But it tightens correlated, same-direction entries the most, which is the entire goal.</p>
+<h2>Engineering</h2>
+<ul>
+<li><strong>Vectorized Monte Carlo.</strong> The whole M-by-N simulation is numpy matmul and broadcasting with <code>int8</code> outcome arrays, so even the 2-million-sim case prices in well under a second.</li>
+<li><strong>Degeneracy guards.</strong> A CALL and a PUT on the same stock is logically impossible to win together, so it short-circuits to zero probability; same-stock same-direction legs are forced to correlation 1.0; probabilities are validated into (0,1); and there is a two-stage positive-definite fallback.</li>
+<li><strong>Ten analytical unit tests</strong> pin the behavior to ground truth: uncorrelated legs reproduce the product, perfectly correlated legs reduce to the minimum leg probability, correlated same-direction beats naive, opposite-direction comes in below naive, plus speed bounds.</li>
+<li><strong>Look-ahead-safe backtest.</strong> Each entry is priced with the <em>prior</em> month's correlation matrix, never one built with data from after the entry date.</li>
+<li><strong>Production staleness guard.</strong> The serving path caches the matrix in memory and refuses to price multi-leg entries at all if the matrix is more than a day stale, so a failed refresh disables the feature rather than pricing on stale correlations.</li>
+</ul>
+<h2>What this demonstrates</h2>
+<ul>
+<li><strong>Quantitative-finance depth applied correctly:</strong> copulas, Cholesky sampling, Ledoit-Wolf shrinkage, Higham nearest-PD repair, regime-conditional correlation, and conservative confidence-interval pricing, all in service of one concrete pricing problem.</li>
+<li><strong>Adversarial / anti-exploitation thinking:</strong> the design question throughout is "how would a sharp user beat this price," and the sector floors, heavy tails, and CI upper bound are direct answers.</li>
+<li><strong>Validation discipline:</strong> out-of-sample, look-ahead-safe, scored per strategy bucket, with the conclusion stated in the metric that matters (margin retained) rather than a flattering aggregate.</li>
+</ul>
+<h2>Tech stack</h2>
+<p>Python · NumPy (vectorized t-copula Monte Carlo, Cholesky) · SciPy (Student-t CDF) · scikit-learn (Ledoit-Wolf shrinkage) · pandas (rolling-window correlation, point-in-time backtest) · custom Higham nearest-PD repair.</p>
+<h2>Honest notes</h2>
+<p>All results are backtest/validation: synthetic multi-leg combinations built from the single-leg model's probabilities and scored against realized outcomes, not realized trading P&amp;L. The per-bucket margins are simulation point estimates with no transaction-cost or friction modeling, so treat them as directional evidence that the pricing holds up, not as guaranteed live numbers. The correlation impact is largest on low-probability longshots and smaller on favorites, so the calibration and margin figures use the realistic favorites-only set while the correlation-impact figure uses the full synthetic universe; the two are kept separate and labeled. A flex / partial-payout extension (paying out on k-of-N legs) is designed but not built; the existing simulation already produces the full win-count distribution it would need. The single-leg probabilities it prices on come from the <a href="quantshark.html">QuantShark</a> model.</p>
+  </div>
+</article>
+<footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
+</body>
+</html>
