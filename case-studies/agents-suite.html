@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seven agents that defend a market — without a central brain — Cooper Norman</title>
-<meta name="description" content="TL;DR ShareShark's pricing model only sees fresh market data during trading hours — but users could place entries overnight and on weekends, when the model">
+<title>Seven agents that defend a market, without a central brain — Cooper Norman</title>
+<meta name="description" content="TL;DR ShareShark's pricing model only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model ">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -24,39 +24,39 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>ShareShark's pricing model only sees fresh market data during trading hours — but users could place entries overnight and on weekends, when the model is effectively <strong>blind</strong>. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of <strong>seven cooperating Claude-powered agents</strong> that watch company news, the macro tape, and the order flow 24/7 — coordinating <em>without</em> a central controller, treating every model output as untrusted, and rolled out in shadow mode before they ever touched a live price. The interesting part isn't any single LLM call; it's the <strong>systems design around the LLM.</strong></p>
+<p>ShareShark's pricing model only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively <strong>blind</strong>. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of <strong>seven cooperating Claude-powered agents</strong> that watch company news, the macro tape, and the order flow 24/7, coordinating <em>without</em> a central controller, treating every model output as untrusted, and rolled out in shadow mode before they ever touched a live price. The interesting part isn't any single LLM call; it's the <strong>systems design around the LLM.</strong></p>
 <hr />
 <h2>The problem: a blind model is an exploitable model</h2>
-<p>On a prediction platform the price <em>is</em> a probability, and that price is only as good as the data behind it. The pricing model refreshes from live options/market data during market hours — but entries stay open overnight, on weekends, and on holidays, when the model can't see anything new. The moment material news breaks in a blind window, the posted line is stale, and the first person to notice can print money off it. The whole agent suite exists to shrink that exploitable window.</p>
+<p>On a prediction platform the price <em>is</em> a probability, and that price is only as good as the data behind it. The pricing model refreshes from live options/market data during market hours, but entries stay open overnight, on weekends, and on holidays, when the model can't see anything new. The moment material news breaks in a blind window, the posted line is stale, and the first person to notice can print money off it. The whole agent suite exists to shrink that exploitable window.</p>
 <h2>The system: seven agents, three jobs</h2>
-<p>I used AI <strong>only where it earns its place</strong> — several agents are plain statistical engines with an LLM <em>review gate</em>, not LLM-first.</p>
+<p>I used AI <strong>only where it earns its place</strong>: several agents are plain statistical engines with an LLM <em>review gate</em>, not LLM-first.</p>
 <ul>
 <li><strong>Risk-defense (the core):</strong></li>
-<li><strong>News Guardian</strong> — 24/7 two-tier news monitor that pauses an individual stock when company-specific material news breaks.</li>
-<li><strong>Adjustment Agent</strong> — scans futures + per-ticker news during stale periods and applies <em>overlay</em> odds-multipliers for the macro/sector risk News Guardian deliberately ignores (it never touches the model itself).</li>
-<li><strong>Activity Guardian</strong> — watches aggregate trading volume for one-sided surges that signal coordinated or informed money.</li>
-<li><strong>Sharp Guardian</strong> — a statistical user-profiling engine that tiers users by ROI/win-rate and correlates their entries with subsequent news pauses to surface possible insider activity.</li>
-<li><strong>Handle Agent</strong> — a market-maker-style price-shading engine that nudges prices against detected order-flow imbalances (with an LLM gate for larger moves).</li>
-<li><strong>Growth:</strong> <strong>Shark Feed</strong> — drafts brand-voice social posts from the news feed.</li>
-<li><strong>Automation:</strong> <strong>Daily Shark</strong> — a transparent scoring formula that picks the featured daily contest.</li>
+<li><strong>News Guardian:</strong> 24/7 two-tier news monitor that pauses an individual stock when company-specific material news breaks.</li>
+<li><strong>Adjustment Agent:</strong> scans futures + per-ticker news during stale periods and applies <em>overlay</em> odds-multipliers for the macro/sector risk News Guardian deliberately ignores (it never touches the model itself).</li>
+<li><strong>Activity Guardian:</strong> watches aggregate trading volume for one-sided surges that signal coordinated or informed money.</li>
+<li><strong>Sharp Guardian:</strong> a statistical user-profiling engine that tiers users by ROI/win-rate and correlates their entries with subsequent news pauses to surface possible insider activity.</li>
+<li><strong>Handle Agent:</strong> a market-maker-style price-shading engine that nudges prices against detected order-flow imbalances (with an LLM gate for larger moves).</li>
+<li><strong>Growth:</strong> <strong>Shark Feed</strong> drafts brand-voice social posts from the news feed.</li>
+<li><strong>Automation:</strong> <strong>Daily Shark</strong> is a transparent scoring formula that picks the featured daily contest.</li>
 </ul>
 <h2>The signature design: cheap triage, smart analysis</h2>
 <p>Almost every LLM agent runs the same cost-optimized pipeline:
-- <strong>Tier 1 — Haiku triage:</strong> one cheap batched call screens many candidates and returns just flags/indices.
-- <strong>Tier 2 — Sonnet analysis:</strong> expensive deep reasoning runs <em>only</em> on the handful Haiku flagged, returning a structured JSON decision.</p>
-<p>The subtle part is the <strong>safety net.</strong> When entries are closed (market open, no exploitation risk), most flagged articles are auto-ignored after the cheap pass — <em>unless</em> Haiku tags an article <code>extreme</code>, or its headline matches a curated <code>EXTREME_KEYWORDS</code> list (death, fraud, delisting, halt, M&amp;A…). That keeps the news monitor's design cost near <strong>$2/month</strong> without ever creating a blind spot on the dangerous tail.</p>
+- <strong>Tier 1, Haiku triage:</strong> one cheap batched call screens many candidates and returns just flags/indices.
+- <strong>Tier 2, Sonnet analysis:</strong> expensive deep reasoning runs <em>only</em> on the handful Haiku flagged, returning a structured JSON decision.</p>
+<p>The subtle part is the <strong>safety net.</strong> When entries are closed (market open, no exploitation risk), most flagged articles are auto-ignored after the cheap pass, <em>unless</em> Haiku tags an article <code>extreme</code>, or its headline matches a curated <code>EXTREME_KEYWORDS</code> list (death, fraud, delisting, halt, M&amp;A…). That keeps the news monitor's design cost near <strong>$2/month</strong> without ever creating a blind spot on the dangerous tail.</p>
 <h2>No central brain: separation of concerns</h2>
-<p>The hard part of a multi-agent system is stopping agents from fighting. An overnight war headline could trigger <em>both</em> News Guardian (pause the stock) and the Adjustment Agent (macro overlay) — double-counting the same risk. I solved it without a central coordinator: each agent has an explicit scope encoded as hard "this is <strong>not</strong> your job" rules (News Guardian = company-specific only; Adjustment = macro/sector), and downstream agents are fed upstream agents' <em>recent decisions per ticker</em> so they skip anything already handled. Clean division of labor, fewer redundant data calls, no conflicting actions.</p>
+<p>The hard part of a multi-agent system is stopping agents from fighting. An overnight war headline could trigger <em>both</em> News Guardian (pause the stock) and the Adjustment Agent (macro overlay), double-counting the same risk. I solved it without a central coordinator: each agent has an explicit scope encoded as hard "this is <strong>not</strong> your job" rules (News Guardian = company-specific only; Adjustment = macro/sector), and downstream agents are fed upstream agents' <em>recent decisions per ticker</em> so they skip anything already handled. Clean division of labor, fewer redundant data calls, no conflicting actions.</p>
 <h2>The insight: tell the model exactly what it can't see</h2>
-<p>Rather than reacting to "futures are +0.5% vs. prior close," the system reasons about <strong>what the pricing model could last observe.</strong> A <em>staleness-tier</em> model encodes the data-freshness regime as a function of time-of-day / weekend / holiday, feeds that to Claude as context, and scales rule-based overlays by an absorption factor. It persists a <strong>baseline snapshot</strong> between runs so an adjustment measures the move <em>since the model went blind</em> — not the cumulative move it already priced in. It also encodes that US futures don't trade Fri 5pm–Sun 6pm, so a weekend futures % move isn't new information. (That's the kind of detail most people get wrong.)</p>
+<p>Rather than reacting to "futures are +0.5% vs. prior close," the system reasons about <strong>what the pricing model could last observe.</strong> A <em>staleness-tier</em> model encodes the data-freshness regime as a function of time-of-day / weekend / holiday, feeds that to Claude as context, and scales rule-based overlays by an absorption factor. It persists a <strong>baseline snapshot</strong> between runs so an adjustment measures the move <em>since the model went blind</em>, not the cumulative move it already priced in. It also encodes that US futures don't trade Fri 5pm–Sun 6pm, so a weekend futures % move isn't new information. (That's the kind of detail most people get wrong.)</p>
 <h2>Treating the LLM as an untrusted financial actuator</h2>
 <p>Claude's JSON recommendations move the prices users play against, so its output is validated like hostile input: layered JSON extraction (whole-string → code-fence → brace-matching), enum validation, range <strong>clamping</strong> (e.g. multipliers bounded to [0.50, 1.10]), an invariant that the two sides of a market can never both exceed 1.0 (which would let users profit risk-free either way), and safe defaults (<code>MANUAL_REVIEW</code>) on any parse failure. <strong>The agent can be wrong; it can never produce an unsafe or unparseable action.</strong></p>
 <h2>Shipping it safely</h2>
-<p>Every agent ran in <strong>shadow mode</strong> (log + Discord alert, no action) for 1–2 weeks, reviewed against a full decision audit trail — every decision persisted, <em>including the IGNOREs</em>, so I could tune prompts and study false positives — then a single flag flipped it live. Heartbeats plus a watchdog fire an emergency alert if an agent goes silent, and alerts are environment-tagged across staging and prod.</p>
+<p>Every agent ran in <strong>shadow mode</strong> (log + Discord alert, no action) for 1–2 weeks, reviewed against a full decision audit trail (every decision persisted, <em>including the IGNOREs</em>, so I could tune prompts and study false positives), then a single flag flipped it live. Heartbeats plus a watchdog fire an emergency alert if an agent goes silent, and alerts are environment-tagged across staging and prod.</p>
 <h2>What this demonstrates</h2>
 <ul>
 <li><strong>Production applied-AI engineering, not a chatbot wrapper:</strong> cost architecture, guardrails, orchestration, and observability around the model.</li>
-<li><strong>LLM-as-untrusted-component discipline</strong> — the thing that actually matters when AI touches money.</li>
+<li><strong>LLM-as-untrusted-component discipline:</strong> the thing that actually matters when AI touches money.</li>
 <li><strong>Multi-agent coordination without a central brain.</strong></li>
 <li><strong>Domain modeling:</strong> market-time mechanics, data-staleness reasoning, market-maker-style price-shading.</li>
 </ul>
@@ -65,7 +65,7 @@
 <h2>Tech stack</h2>
 <p>Python 3.12 · Django / DRF · Celery + Beat / Redis · Anthropic Claude SDK (Haiku + Sonnet, web-search tool) · Marketaux / StockNewsAPI · yfinance · exchange_calendars (NYSE) · Discord alerting · AWS EC2 (staging + prod).</p>
 <h2>Honest notes</h2>
-<p>ShareShark operated pre-launch / low-traffic, so this is design-and-shadow-validation work, not "battle-tested at scale." Cost figures are <strong>design targets</strong> from code, not billed actuals. There is <strong>no realized P&amp;L</strong> here — these are risk-<em>protection</em> systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.</p>
+<p>ShareShark operated pre-launch / low-traffic, so this is design-and-shadow-validation work, not "battle-tested at scale." Cost figures are <strong>design targets</strong> from code, not billed actuals. There is <strong>no realized P&amp;L</strong> here: these are risk-<em>protection</em> systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.</p>
   </div>
 </article>
 <footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
