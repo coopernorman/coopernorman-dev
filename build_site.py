@@ -26,6 +26,7 @@ HEADER = """<!DOCTYPE html>
 <title>{title} — Cooper Norman</title>
 <meta name="description" content="{desc}">
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <nav class="nav">

@@ -6,6 +6,7 @@
 <title>One model, not seven: letting backtests kill my own hypotheses — Cooper Norman</title>
 <meta name="description" content="TL;DR While building ShareShark's options-pricing engine I twice hypothesized that more specialized models would price better — first a separate model per ">
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <nav class="nav">
@@ -33,7 +34,7 @@
 </ol>
 <p>Both are reasonable. Both are exactly the kind of complexity you add by <em>assuming</em> instead of <em>measuring</em>. So I measured.</p>
 <h2>Experiment 1 — five timing-window models</h2>
-<p>I trained five separate LightGBM models — one per snapshot window — each with its own feature set, its own data pipeline, and snapshot-specific "time since last close" features, routed in production by the active snapshot. Then I backtested them <strong>apples-to-apples on the same held-out test set (~1.2M rows):</strong></p>
+<p>I trained five separate LightGBM models — one per snapshot window — each with its own feature set, its own data pipeline, and snapshot-specific "time since last close" features, routed in production by the active snapshot. Then I backtested them <strong>apples-to-apples on the same held-out test set (1.2M rows):</strong></p>
 <table>
 <thead>
 <tr>
@@ -75,10 +76,10 @@
 </tr>
 </tbody>
 </table>
-<p>The five "specialists" differed from each other by only <strong>0.0014 log-loss</strong> — and the single general model beat every one of them (also best on AUC 0.980 and calibration error 0.0025). An ablation put the Bitcoin-timing signal at <strong>~0.24% of log-loss — roughly 1% of the total edge over Black-Scholes.</strong></p>
+<p>The five "specialists" differed from each other by only <strong>0.0014 log-loss</strong> — and the single general model beat every one of them (also best on AUC 0.980 and calibration error 0.0025). An ablation put the Bitcoin-timing signal at <strong>0.24% of log-loss — roughly 1% of the total edge over Black-Scholes.</strong></p>
 <p><strong>Verdict:</strong> the timing window barely mattered. Five models meant five data pipelines and five points of failure, for nothing. Collapsed to one. (I kept a <em>single</em> lightweight Bitcoin freshness feed for weekend pricing — worth it; five models were not.)</p>
 <h2>Experiment 2 — the EOD specialist (a clever augmentation that still lost)</h2>
-<p>End-of-day contracts (expiring today) really are a different regime, so I built an EOD-specific model. The clever part: real DTE-1 training data is scarce, so I <strong>manufactured it.</strong> I took real DTE 2–5 options, re-labeled them against the <em>next</em> trading day's close (handling weekends/holidays via an exchange calendar), and <strong>regenerated every Greek at T = 1 day</strong> — recomputing delta/gamma/theta/vega/rho, the IV-derived features, and the moneyness buckets — to turn each into a synthetic "DTE-1" sample. That multiplied the DTE-1 training set several-fold (~3.4M rows). I tried two architectures: direct prediction, and a Black-Scholes-<strong>residual</strong> model (LightGBM learning corrections on top of the BS price).</p>
+<p>End-of-day contracts (expiring today) really are a different regime, so I built an EOD-specific model. The clever part: real DTE-1 training data is scarce, so I <strong>manufactured it.</strong> I took real DTE 2–5 options, re-labeled them against the <em>next</em> trading day's close (handling weekends/holidays via an exchange calendar), and <strong>regenerated every Greek at T = 1 day</strong> — recomputing delta/gamma/theta/vega/rho, the IV-derived features, and the moneyness buckets — to turn each into a synthetic "DTE-1" sample. That multiplied the DTE-1 training set several-fold (3.4M rows). I tried two architectures: direct prediction, and a Black-Scholes-<strong>residual</strong> model (LightGBM learning corrections on top of the BS price).</p>
 <p>The honest result: <strong>every EOD variant lost to plain Black-Scholes on the real test set.</strong></p>
 <table>
 <thead>
@@ -116,7 +117,7 @@
 <p>The trap I had to avoid: on its <em>own</em> synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss — but that's an easier task scored on different data. The <em>fair</em> comparison is EOD vs. Black-Scholes on the real test set, where it lost. Knowing which comparison is honest is the whole game.</p>
 </blockquote>
 <h2>What won: one robust short-DTE model</h2>
-<p>A single model covering the full short-dated range (~DTE 1–5/1–7) on <strong>real</strong> expiry labels — what shipped as the production EOW model. It won on every axis:</p>
+<p>A single model covering the full short-dated range (DTE 1–5/1–7) on <strong>real</strong> expiry labels — what shipped as the production EOW model. It won on every axis:</p>
 <ul>
 <li><strong>Accuracy &amp; calibration (backtest):</strong> AUC <strong>0.979</strong>, log-loss <strong>0.171</strong>, expected-calibration-error <strong>0.0021</strong> — versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.</li>
 <li><strong>Production simplicity:</strong> one model, one data pipeline, no snapshot-routing logic, no synthetic-data step. Easier to serve in real time, far fewer failure modes, one thing to monitor.</li>

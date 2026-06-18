@@ -29,7 +29,7 @@ Almost every LLM agent runs the same cost-optimized pipeline:
 - **Tier 1 — Haiku triage:** one cheap batched call screens many candidates and returns just flags/indices.
 - **Tier 2 — Sonnet analysis:** expensive deep reasoning runs *only* on the handful Haiku flagged, returning a structured JSON decision.
 
-The subtle part is the **safety net.** When entries are closed (market open, no exploitation risk), most flagged articles are auto-ignored after the cheap pass — *unless* Haiku tags an article `extreme`, or its headline matches a curated `EXTREME_KEYWORDS` list (death, fraud, delisting, halt, M&A…). That keeps the news monitor's design cost near **~$2/month** without ever creating a blind spot on the dangerous tail.
+The subtle part is the **safety net.** When entries are closed (market open, no exploitation risk), most flagged articles are auto-ignored after the cheap pass — *unless* Haiku tags an article `extreme`, or its headline matches a curated `EXTREME_KEYWORDS` list (death, fraud, delisting, halt, M&A…). That keeps the news monitor's design cost near **$2/month** without ever creating a blind spot on the dangerous tail.
 
 ## No central brain: separation of concerns
 The hard part of a multi-agent system is stopping agents from fighting. An overnight war headline could trigger *both* News Guardian (pause the stock) and the Adjustment Agent (macro overlay) — double-counting the same risk. I solved it without a central coordinator: each agent has an explicit scope encoded as hard "this is **not** your job" rules (News Guardian = company-specific only; Adjustment = macro/sector), and downstream agents are fed upstream agents' *recent decisions per ticker* so they skip anything already handled. Clean division of labor, fewer redundant data calls, no conflicting actions.
@@ -50,7 +50,7 @@ Every agent ran in **shadow mode** (log + Discord alert, no action) for 1–2 we
 - **Domain modeling:** market-time mechanics, data-staleness reasoning, market-maker-style price-shading.
 
 ## Scale & shape (design / shadow-validated)
-~**14,600 lines of Python across 77 files**; **7 agents**; **2 Claude models** (Haiku 4.5 triage, Sonnet 4.6 analysis) plus the hosted web-search tool. News Guardian runs every 5 minutes, 24/7; ~61–71 tickers scanned per macro run; 11 futures/indices monitored.
+**14,600 lines of Python across 77 files**; **7 agents**; **2 Claude models** (Haiku 4.5 triage, Sonnet 4.6 analysis) plus the hosted web-search tool. News Guardian runs every 5 minutes, 24/7; 61–71 tickers scanned per macro run; 11 futures/indices monitored.
 
 ## Tech stack
 Python 3.12 · Django / DRF · Celery + Beat / Redis · Anthropic Claude SDK (Haiku + Sonnet, web-search tool) · Marketaux / StockNewsAPI · yfinance · exchange_calendars (NYSE) · Discord alerting · AWS EC2 (staging + prod).

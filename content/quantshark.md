@@ -5,7 +5,7 @@
 ---
 
 ## TL;DR
-I built the pricing brain of **ShareShark**, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on **every** metric — and *dominated* the one that matters most for a pricing product, calibration: **expected-calibration-error ~19× tighter (0.002 vs 0.040)**, worst-case calibration error ~18× tighter, plus ~18% lower log-loss and a better Brier score.
+I built the pricing brain of **ShareShark**, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on **every** metric — and *dominated* the one that matters most for a pricing product, calibration: **expected-calibration-error 19× tighter (0.002 vs 0.040)**, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.
 
 ---
 
@@ -16,7 +16,7 @@ So the goal wasn't "high accuracy." It was **trustworthy probabilities across th
 
 ## The approach
 
-**Data & features.** ~21.5M training rows across 342 stocks, with **167 engineered features**: option Greeks, implied and realized volatility structure, moneyness buckets, ETF/macro context, a Black-Scholes baseline as a feature, and market-microstructure signals.
+**Data & features.** 21.5M training rows across 342 stocks, with **167 engineered features**: option Greeks, implied and realized volatility structure, moneyness buckets, ETF/macro context, a Black-Scholes baseline as a feature, and market-microstructure signals.
 
 **Model.** Today it's a **single, unified LightGBM model** covering the full short-dated horizon — but it got there by iterating. For a long stretch it actually ran as *multiple* specialized models in production (one per market-timing window, plus separate end-of-day / end-of-week models); each version got better, and at some point I tested whether that specialization was still earning its keep. It wasn't — so I consolidated into one robust model that beat the specialized versions on accuracy *and* was far simpler to run. (Full story → [model-consolidation case study](model-consolidation.html).)
 
@@ -28,16 +28,16 @@ I evaluated with **expected-calibration-error (ECE)** and reliability curves, no
 ![Reliability diagram — predicted vs. observed (backtest)](figures/quantshark_reliability.png)
 
 ## The hardest bug: weekend train/serve skew
-In testing I found the model pricing near-the-money weekend contracts at ~76–83% when the true rate was ~42%. Weekday accuracy was fine, so it wasn't model quality.
+In testing I found the model pricing near-the-money weekend contracts at 76–83% when the true rate was 42%. Weekday accuracy was fine, so it wasn't model quality.
 
 Root cause: 17 features depend on **live bid/ask**, which the data vendor returns as `0.0` when markets are closed. In training, `0.0` had only ever appeared as a *real* value (deep-in-the-money) — so the model learned `0.0 → near-certain`. At serve time on weekends, `0.0` meant *"missing."* **Same value, opposite meaning.**
 
-Fix: retrain with **15% zero-fill augmentation**, teaching the model that `0.0` can also mean "no signal — lean on delta/Greeks/Black-Scholes." Ablation confirmed near-the-money weekend predictions fell from ~74% to a correct ~42%, with no loss of weekday accuracy. Shipped as a drop-in weight swap.
+Fix: retrain with **15% zero-fill augmentation**, teaching the model that `0.0` can also mean "no signal — lean on delta/Greeks/Black-Scholes." Ablation confirmed near-the-money weekend predictions fell from 74% to a correct 42%, with no loss of weekday accuracy. Shipped as a drop-in weight swap.
 
 ![Weekend train/serve-skew: predicted vs. actual, before and after the fix](figures/quantshark_weekend_skew.png)
 
 ## The safety net: a model-free "delta ceiling"
-Even a 0.979-AUC model occasionally extrapolates badly in the deep-out-of-the-money tail — and any over-generous price is a direct loss. So model output is never trusted unconditionally: I bound it with an **analytic ceiling derived from the option's delta** (`~1/|delta|`), cap the model's odds at a fixed multiple of that bound, blend a symmetric floor to correct known near-the-money over-juicing, and **log every override**. The model adds value where it's confident; the math constrains it where it isn't; the system **fails closed** on missing features.
+Even a 0.979-AUC model occasionally extrapolates badly in the deep-out-of-the-money tail — and any over-generous price is a direct loss. So model output is never trusted unconditionally: I bound it with an **analytic ceiling derived from the option's delta** (`1/|delta|`), cap the model's odds at a fixed multiple of that bound, blend a symmetric floor to correct known near-the-money over-juicing, and **log every override**. The model adds value where it's confident; the math constrains it where it isn't; the system **fails closed** on missing features.
 
 ![The delta-ceiling: final odds = min(model, analytic bound)](figures/quantshark_delta_ceiling.png)
 
@@ -52,10 +52,10 @@ Every figure here is **out-of-sample**. The model was evaluated on a **temporal 
 | Metric | QuantShark (LightGBM) | Black-Scholes | Margin |
 |---|---|---|---|
 | ROC AUC ↑ | **0.979** | 0.973 | edges an already-strong baseline |
-| Log-loss ↓ | **0.171** | 0.207 | **~18% lower** |
-| Brier score ↓ | **0.053** | 0.060 | **~12% lower** |
-| Expected calibration error (ECE) ↓ | **0.0021** | 0.0403 | **~19× tighter** |
-| Max calibration error (MCE) ↓ | **0.0079** | 0.1392 | **~18× tighter** |
+| Log-loss ↓ | **0.171** | 0.207 | **18% lower** |
+| Brier score ↓ | **0.053** | 0.060 | **12% lower** |
+| Expected calibration error (ECE) ↓ | **0.0021** | 0.0403 | **19× tighter** |
+| Max calibration error (MCE) ↓ | **0.0079** | 0.1392 | **18× tighter** |
 
 *↑ higher is better, ↓ lower is better. Out-of-sample backtest of the production model; these are validation figures, not realized profit.*
 

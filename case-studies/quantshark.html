@@ -6,6 +6,7 @@
 <title>Case Study — QuantShark: pricing short-dated options with a calibrated model + a safety net — Cooper Norman</title>
 <meta name="description" content="TL;DR I built the pricing brain of ShareShark, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a">
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <nav class="nav">
@@ -23,25 +24,25 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>I built the pricing brain of <strong>ShareShark</strong>, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on <strong>every</strong> metric — and <em>dominated</em> the one that matters most for a pricing product, calibration: <strong>expected-calibration-error ~19× tighter (0.002 vs 0.040)</strong>, worst-case calibration error ~18× tighter, plus ~18% lower log-loss and a better Brier score.</p>
+<p>I built the pricing brain of <strong>ShareShark</strong>, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on <strong>every</strong> metric — and <em>dominated</em> the one that matters most for a pricing product, calibration: <strong>expected-calibration-error 19× tighter (0.002 vs 0.040)</strong>, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.</p>
 <hr />
 <h2>The problem</h2>
 <p>On a prediction platform, <strong>the price <em>is</em> the product</strong>, and the price is just a probability: odds = 1 / P(in-the-money). That means a model that's <em>accurate on average</em> but <em>miscalibrated</em> is worse than useless — if it says 80% when the truth is 42%, every user who notices prints money off you.</p>
 <p>So the goal wasn't "high accuracy." It was <strong>trustworthy probabilities across the whole distribution</strong>, plus guardrails for the cases where any model eventually misbehaves.</p>
 <h2>The approach</h2>
-<p><strong>Data &amp; features.</strong> ~21.5M training rows across 342 stocks, with <strong>167 engineered features</strong>: option Greeks, implied and realized volatility structure, moneyness buckets, ETF/macro context, a Black-Scholes baseline as a feature, and market-microstructure signals.</p>
+<p><strong>Data &amp; features.</strong> 21.5M training rows across 342 stocks, with <strong>167 engineered features</strong>: option Greeks, implied and realized volatility structure, moneyness buckets, ETF/macro context, a Black-Scholes baseline as a feature, and market-microstructure signals.</p>
 <p><strong>Model.</strong> Today it's a <strong>single, unified LightGBM model</strong> covering the full short-dated horizon — but it got there by iterating. For a long stretch it actually ran as <em>multiple</em> specialized models in production (one per market-timing window, plus separate end-of-day / end-of-week models); each version got better, and at some point I tested whether that specialization was still earning its keep. It wasn't — so I consolidated into one robust model that beat the specialized versions on accuracy <em>and</em> was far simpler to run. (Full story → <a href="model-consolidation.html">model-consolidation case study</a>.)</p>
 <p><strong>Tuning that can't cheat.</strong> I drove hyperparameters with a Bayesian search (scikit-optimize, 14-dimensional) — but a naive objective rewards <em>degenerate</em> models (a model that always predicts near the base rate can post a deceptively low log-loss). So I hardened the objective with <strong>9 anti-degeneracy guards</strong> that reject overconfident, low-entropy, or wrong-direction models the optimizer would otherwise be happy to hand me.</p>
 <h2>Calibration is the product</h2>
 <p>I evaluated with <strong>expected-calibration-error (ECE)</strong> and reliability curves, not just AUC. Interesting result: the <strong>raw</strong> LightGBM output was already better-calibrated (ECE ≈ 0.0021 — about 19× tighter than Black-Scholes) than fitted Platt/Isotonic post-processors — so I shipped raw and kept the calibrators as monitored fallbacks. The discipline: <em>measure calibration explicitly and let the data decide, rather than assuming you need a calibration layer.</em></p>
 <p><img alt="Reliability diagram — predicted vs. observed (backtest)" src="../assets/img/quantshark_reliability.png" /></p>
 <h2>The hardest bug: weekend train/serve skew</h2>
-<p>In testing I found the model pricing near-the-money weekend contracts at ~76–83% when the true rate was ~42%. Weekday accuracy was fine, so it wasn't model quality.</p>
+<p>In testing I found the model pricing near-the-money weekend contracts at 76–83% when the true rate was 42%. Weekday accuracy was fine, so it wasn't model quality.</p>
 <p>Root cause: 17 features depend on <strong>live bid/ask</strong>, which the data vendor returns as <code>0.0</code> when markets are closed. In training, <code>0.0</code> had only ever appeared as a <em>real</em> value (deep-in-the-money) — so the model learned <code>0.0 → near-certain</code>. At serve time on weekends, <code>0.0</code> meant <em>"missing."</em> <strong>Same value, opposite meaning.</strong></p>
-<p>Fix: retrain with <strong>15% zero-fill augmentation</strong>, teaching the model that <code>0.0</code> can also mean "no signal — lean on delta/Greeks/Black-Scholes." Ablation confirmed near-the-money weekend predictions fell from ~74% to a correct ~42%, with no loss of weekday accuracy. Shipped as a drop-in weight swap.</p>
+<p>Fix: retrain with <strong>15% zero-fill augmentation</strong>, teaching the model that <code>0.0</code> can also mean "no signal — lean on delta/Greeks/Black-Scholes." Ablation confirmed near-the-money weekend predictions fell from 74% to a correct 42%, with no loss of weekday accuracy. Shipped as a drop-in weight swap.</p>
 <p><img alt="Weekend train/serve-skew: predicted vs. actual, before and after the fix" src="../assets/img/quantshark_weekend_skew.png" /></p>
 <h2>The safety net: a model-free "delta ceiling"</h2>
-<p>Even a 0.979-AUC model occasionally extrapolates badly in the deep-out-of-the-money tail — and any over-generous price is a direct loss. So model output is never trusted unconditionally: I bound it with an <strong>analytic ceiling derived from the option's delta</strong> (<code>~1/|delta|</code>), cap the model's odds at a fixed multiple of that bound, blend a symmetric floor to correct known near-the-money over-juicing, and <strong>log every override</strong>. The model adds value where it's confident; the math constrains it where it isn't; the system <strong>fails closed</strong> on missing features.</p>
+<p>Even a 0.979-AUC model occasionally extrapolates badly in the deep-out-of-the-money tail — and any over-generous price is a direct loss. So model output is never trusted unconditionally: I bound it with an <strong>analytic ceiling derived from the option's delta</strong> (<code>1/|delta|</code>), cap the model's odds at a fixed multiple of that bound, blend a symmetric floor to correct known near-the-money over-juicing, and <strong>log every override</strong>. The model adds value where it's confident; the math constrains it where it isn't; the system <strong>fails closed</strong> on missing features.</p>
 <p><img alt="The delta-ceiling: final odds = min(model, analytic bound)" src="../assets/img/quantshark_delta_ceiling.png" /></p>
 <h2>Bonus: pricing correlated multi-leg entries</h2>
 <p>Users could combine multiple predictions, which are <strong>not independent</strong> (two tech megacaps move together). Naive independence would systematically misprice them and hand out arbitrage. So multi-leg prices come from a <strong>t-Copula Monte Carlo</strong> simulation (Student-t for fat tails) over a correlation matrix stabilized with <strong>Ledoit-Wolf shrinkage</strong>, sector correlation floors, a volatility-regime uplift, and a nearest-positive-definite repair — priced conservatively on the <strong>97.5%-CI upper bound</strong> of joint probability.</p>
@@ -68,25 +69,25 @@
 <td>Log-loss ↓</td>
 <td><strong>0.171</strong></td>
 <td>0.207</td>
-<td><strong>~18% lower</strong></td>
+<td><strong>18% lower</strong></td>
 </tr>
 <tr>
 <td>Brier score ↓</td>
 <td><strong>0.053</strong></td>
 <td>0.060</td>
-<td><strong>~12% lower</strong></td>
+<td><strong>12% lower</strong></td>
 </tr>
 <tr>
 <td>Expected calibration error (ECE) ↓</td>
 <td><strong>0.0021</strong></td>
 <td>0.0403</td>
-<td><strong>~19× tighter</strong></td>
+<td><strong>19× tighter</strong></td>
 </tr>
 <tr>
 <td>Max calibration error (MCE) ↓</td>
 <td><strong>0.0079</strong></td>
 <td>0.1392</td>
-<td><strong>~18× tighter</strong></td>
+<td><strong>18× tighter</strong></td>
 </tr>
 </tbody>
 </table>
