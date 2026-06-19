@@ -5,7 +5,7 @@
 ---
 
 ## TL;DR
-I built the pricing brain of **ShareShark**, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on **every** metric, and *dominated* the one that matters most for a pricing product, calibration: **expected-calibration-error 19× tighter (0.002 vs 0.040)**, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.
+I built the pricing brain of **ShareShark**, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on **every** metric, and *dominated* the one that matters most for a pricing product, calibration: **expected-calibration-error 19× tighter (0.002 vs 0.040)**, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.
 
 ---
 
@@ -75,4 +75,4 @@ Ranking (AUC) was already near the ceiling for both, so the real story is **cali
 Python · LightGBM · scikit-optimize · SciPy / NumPy (t-copula, Ledoit-Wolf, nearest-PD) · pandas · Django/Celery for serving.
 
 ## Honest notes
-Metrics are backtest/validation on historical data; ShareShark operated pre-launch / low-traffic, so these are model-quality results, not live trading P&L. The heavy numerical lifting uses standard libraries (LightGBM, SciPy); the contribution is the feature engineering, the anti-degeneracy guards, the skew diagnosis, the calibration discipline, and the safety layers.
+Metrics are backtest/validation on historical data; ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), not a full public launch, so these are model-quality backtest results, not live trading P&L. The heavy numerical lifting uses standard libraries (LightGBM, SciPy); the contribution is the feature engineering, the anti-degeneracy guards, the skew diagnosis, the calibration discipline, and the safety layers.

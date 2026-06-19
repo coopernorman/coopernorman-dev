@@ -42,7 +42,9 @@ section{ padding:46px 0; border-top:1px solid var(--line); }
 .btn.ghost:hover{ background:var(--soft); text-decoration:none; }
 
 /* cards grid */
-.grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
+.group{ font-size:1.06rem; color:var(--navy); font-weight:700; margin:30px 0 0; letter-spacing:.005em; }
+.group:first-of-type{ margin-top:20px; }
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:14px; }
 @media(max-width:680px){ .grid{ grid-template-columns:1fr; } }
 .card{ border:1px solid var(--line); border-radius:12px; padding:20px 22px; background:#fff; transition:box-shadow .15s,border-color .15s; }
 .card:hover{ box-shadow:0 6px 22px rgba(20,40,70,.08); border-color:#cdd8e6; }

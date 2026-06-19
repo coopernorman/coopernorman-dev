@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cooper Norman — Founder-Engineer · ML, Applied-AI & Regulated-Fintech</title>
-<meta name="description" content="Cooper Norman — founder-engineer who ships production ML, applied-AI, and regulated-fintech systems end-to-end. Case studies, projects, and contact.">
+<meta name="description" content="Cooper Norman, founder-engineer who builds regulated-fintech and ML systems that stay correct under real money. Case studies, projects, and contact.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="assets/style.css">
@@ -27,8 +27,8 @@
 <header class="hero">
   <div class="wrap">
     <p class="eyebrow">Founder-Engineer</p>
-    <h1>I ship production ML, applied-AI, and regulated-fintech systems, end to end.</h1>
-    <p class="lede">Over two years I built and ran <strong>ShareShark</strong>, a real-money stock-prediction platform, solo: from the money ledger and ML pricing engine to a suite of AI risk agents and a cross-platform app.</p>
+    <h1>I build regulated-fintech and ML systems that have to be correct under real money.</h1>
+    <p class="lede">For two years I built and ran <strong>ShareShark</strong> solo, a real-money, dual-currency sweepstakes prediction platform: the money ledger and ACH / KYC / AML compliance stack, a calibrated ML pricing engine, and a suite of AI risk agents. It ran in production, a year of free-to-play plus a real-money soft launch.</p>
     <p class="sub">I came up through poker and +EV markets, so I think in probabilities, calibration, and survivable risk, and I pick up new domains fast. B.B.A. Finance, magna cum laude (UGA).</p>
     <div class="chips">
       <span class="chip">Python · Django · PostgreSQL</span>
@@ -38,6 +38,7 @@
     </div>
     <div class="cta">
       <a class="btn primary" href="#work">See the work</a>
+      <a class="btn ghost" href="https://shareshark.app" target="_blank" rel="noopener">Live demo</a>
       <a class="btn ghost" href="assets/Cooper_Norman_Resume.pdf" target="_blank" rel="noopener">Résumé</a>
       <a class="btn ghost" href="mailto:cooper@coopernorman.dev">Email me</a>
       <a class="btn ghost" href="https://www.linkedin.com/in/coopernorman1" target="_blank" rel="noopener">LinkedIn</a>
@@ -70,6 +71,8 @@
   <div class="wrap">
     <p class="eyebrow">Case studies</p>
     <h2>Deep dives</h2>
+
+    <h3 class="group">Regulated-money platform &amp; AI risk</h3>
     <div class="grid">
       <a class="card" href="case-studies/money-core.html">
         <span class="tag">Regulated-Fintech</span>
@@ -77,6 +80,16 @@
         <p>An idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, tax reporting, and multi-signal geofencing (with a CGNAT/GPS rescue): a dozen third-party rails wired to fail closed.</p>
         <span class="more">Read the case study →</span>
       </a>
+      <a class="card" href="case-studies/agents-suite.html">
+        <span class="tag">Applied-AI</span>
+        <h3>Seven agents that defend a market, without a central brain</h3>
+        <p>A suite of cooperating Claude agents (two-tier Haiku/Sonnet routing, LLM output treated as untrusted, shadow-mode rollout) guarding the platform 24/7 against stale-price exploitation.</p>
+        <span class="more">Read the case study →</span>
+      </a>
+    </div>
+
+    <h3 class="group">The ML pricing engine: deep dives</h3>
+    <div class="grid">
       <a class="card" href="case-studies/quantshark.html">
         <span class="tag">Quant · ML</span>
         <h3>Pricing short-dated options with a calibrated model + a safety net</h3>
@@ -92,19 +105,13 @@
       <a class="card" href="case-studies/copula-pricer.html">
         <span class="tag">Quant · ML</span>
         <h3>Naive independence is an arbitrage: a t-copula multi-leg pricer</h3>
-        <p>Multiplying correlated probabilities overpays users on same-sector stacks. A Student-t copula Monte Carlo over a Ledoit-Wolf, regime-aware correlation matrix prices the true joint probability, validated margin-positive across a six-year backtest.</p>
+        <p>Multiplying correlated probabilities overpays users on same-sector stacks. A Student-t copula Monte Carlo over a Ledoit-Wolf, regime-aware correlation matrix prices the joint probability, validated margin-positive across a six-year backtest.</p>
         <span class="more">Read the case study →</span>
       </a>
       <a class="card" href="case-studies/data-pipeline.html">
         <span class="tag">Data Engineering · ML</span>
         <h3>The hard part was never the model: a leak-proof data pipeline</h3>
-        <p>Six vendors, three timestamp formats, a million-plus API pulls, and point-in-time correctness end to end: backward <code>merge_asof</code>, expiry-only labels, and a purged-and-embargoed split that verifies its own honesty.</p>
-        <span class="more">Read the case study →</span>
-      </a>
-      <a class="card" href="case-studies/agents-suite.html">
-        <span class="tag">Applied-AI</span>
-        <h3>Seven agents that defend a market, without a central brain</h3>
-        <p>A suite of cooperating Claude agents (two-tier Haiku/Sonnet routing, LLM output treated as untrusted, shadow-mode rollout) guarding a money platform 24/7.</p>
+        <p>Six vendors, three timestamp formats, a million-plus API pulls, and point-in-time correctness throughout: backward <code>merge_asof</code>, expiry-only labels, and a purged-and-embargoed split that verifies its own honesty.</p>
         <span class="more">Read the case study →</span>
       </a>
     </div>
@@ -126,8 +133,8 @@
   <div class="wrap">
     <p class="eyebrow">About</p>
     <h2>Cooper Norman</h2>
-    <p>I'm a founder-engineer who builds production systems end-to-end, from data pipelines and ML models to live serving, safety rails, and the operational glue that keeps it all running. Most of that came from building <strong>ShareShark</strong> solo: a concurrency-safe money ledger, an ACH payout and KYC/AML/tax compliance stack, a calibrated LightGBM options-pricing engine, a suite of cooperating Claude-powered risk agents, and a cross-platform Vue/Capacitor client.</p>
-    <p>Alongside it I built calibrated sports-prediction models and a from-scratch quant risk toolkit. I treat model output as something to <em>bound</em>, not blindly trust, and I care most about systems that have to be correct under real money and real adversaries. Finance degree, pricing &amp; valuation emphasis (UGA, magna cum laude).</p>
+    <p>I'm a founder-engineer who builds production systems, from data pipelines and ML models to live serving and safety rails. Most of that came from building <strong>ShareShark</strong> solo, a real-money, dual-currency sweepstakes prediction platform (the dual-currency model is what keeps it a skill contest rather than gambling): a concurrency-safe money ledger, an ACH payout and KYC/AML/tax compliance stack, a calibrated LightGBM options-pricing engine, a suite of cooperating Claude-powered risk agents, and a cross-platform Vue/Capacitor client.</p>
+    <p>It ran in production through a year of free-to-play and a limited real-money soft launch; I paused the public real-money rollout at the payment-processor step after a closer read of the regulatory picture, and it stays live as free-to-play today. Alongside it I built calibrated sports-prediction models and a from-scratch quant risk toolkit. I treat model output as something to <em>bound</em>, not blindly trust, and I care most about systems that stay correct under real money and real users. Finance degree, pricing &amp; valuation emphasis (UGA, magna cum laude).</p>
   </div>
 </section>
 
@@ -141,7 +148,7 @@
       <a href="https://www.linkedin.com/in/coopernorman1" target="_blank" rel="noopener">linkedin.com/in/coopernorman1</a> &nbsp;·&nbsp;
       <a href="https://github.com/coopernorman" target="_blank" rel="noopener">github.com/coopernorman</a>
     </p>
-    <p class="sub"><a href="assets/Cooper_Norman_Resume.pdf" target="_blank" rel="noopener">Download résumé (PDF)</a></p>
+    <p class="sub"><a href="assets/Cooper_Norman_Resume.pdf" target="_blank" rel="noopener">Download résumé (PDF)</a> &nbsp;·&nbsp; <a href="https://shareshark.app" target="_blank" rel="noopener">See ShareShark live (shareshark.app)</a>, test login on request</p>
   </div>
 </section>
 

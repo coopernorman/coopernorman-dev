@@ -75,4 +75,4 @@ Temporal split (train on earlier data, test on a later held-out period); the *sa
 Python · LightGBM · scikit-optimize (Bayesian search) · SciPy / NumPy (vectorized Black-Scholes & Greek regeneration) · pandas · temporal cross-validation.
 
 ## Honest notes
-All figures are backtest/validation on historical data; ShareShark operated pre-launch / low-traffic, so these are model-quality results, not realized P&L. "Short-DTE" appears as DTE 1–5 in the comparison files and DTE 1–7 in the deployment plan. The synthetic-augmentation multiple is approximate. The multi-leg pricer is an overlay on the single model, not a second pricing model.
+All figures are backtest/validation on historical data; ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), so these are model-quality backtest results, not realized P&L. "Short-DTE" appears as DTE 1–5 in the comparison files and DTE 1–7 in the deployment plan. The synthetic-augmentation multiple is approximate. The multi-leg pricer is an overlay on the single model, not a second pricing model.

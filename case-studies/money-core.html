@@ -24,7 +24,7 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>The hard part of a real-money platform isn't the database: it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated <strong>ShareShark's</strong> entire money-and-compliance stack solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.</p>
+<p>The hard part of a real-money platform isn't the database: it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated the entire money-and-compliance stack of <strong>ShareShark</strong> (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.</p>
 <h2>The problem</h2>
 <p>On a money platform, the expensive failures live at the <strong>seams</strong>, where your code meets a payment processor, an identity vendor, a geolocation API, a webhook you didn't send. Real cash leaving to an unverified, geo-ineligible, or fraudulent user is the failure that actually costs you. So the design rule was simple: <strong>every external rail fails closed</strong>, and money only moves once every check has passed.</p>
 <h2>The ACH payout lifecycle (idempotent, fail-closed)</h2>
@@ -53,7 +53,7 @@
 <h2>Tech stack</h2>
 <p>Python · Django · Django REST Framework · PostgreSQL · Celery / Redis · AES-256-GCM · Payliance (ACH) · Veriff (KYC) · MaxMind (geolocation) · deployed on AWS behind Nginx/Gunicorn.</p>
 <h2>Honest notes</h2>
-<p>ShareShark operated pre-launch / low-traffic, so this is <strong>design-and-integration</strong> work, not "battle-tested at N TPS." Third-party services (Payliance, Veriff, MaxMind, the fingerprinting vendor) do real work; the contribution is the integration design, the fail-closed and idempotent wiring, the geolocation-rescue insight, and the breadth of compliance shipped by one person.</p>
+<p>ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), so this is <strong>design-and-integration</strong> work validated in a live soft launch, not "battle-tested at N TPS." It stays live as free-to-play at <a href="https://shareshark.app">shareshark.app</a>. Third-party services (Payliance, Veriff, MaxMind, the fingerprinting vendor) do real work; the contribution is the integration design, the fail-closed and idempotent wiring, the geolocation-rescue insight, and the breadth of compliance shipped by one person.</p>
   </div>
 </article>
 <footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>

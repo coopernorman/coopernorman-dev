@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Case Study, QuantShark: pricing short-dated options with a calibrated model + a safety net — Cooper Norman</title>
-<meta name="description" content="TL;DR I built the pricing brain of ShareShark, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a">
+<meta name="description" content="TL;DR I built the pricing brain of ShareShark, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estima">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -24,7 +24,7 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>I built the pricing brain of <strong>ShareShark</strong>, a real-money stock-prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on <strong>every</strong> metric, and <em>dominated</em> the one that matters most for a pricing product, calibration: <strong>expected-calibration-error 19× tighter (0.002 vs 0.040)</strong>, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.</p>
+<p>I built the pricing brain of <strong>ShareShark</strong>, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on <strong>every</strong> metric, and <em>dominated</em> the one that matters most for a pricing product, calibration: <strong>expected-calibration-error 19× tighter (0.002 vs 0.040)</strong>, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.</p>
 <hr />
 <h2>The problem</h2>
 <p>On a prediction platform, <strong>the price <em>is</em> the product</strong>, and the price is just a probability: odds = 1 / P(in-the-money). That means a model that's <em>accurate on average</em> but <em>miscalibrated</em> is worse than useless: if it says 80% when the truth is 42%, every user who notices prints money off you.</p>
@@ -104,7 +104,7 @@
 <h2>Tech stack</h2>
 <p>Python · LightGBM · scikit-optimize · SciPy / NumPy (t-copula, Ledoit-Wolf, nearest-PD) · pandas · Django/Celery for serving.</p>
 <h2>Honest notes</h2>
-<p>Metrics are backtest/validation on historical data; ShareShark operated pre-launch / low-traffic, so these are model-quality results, not live trading P&amp;L. The heavy numerical lifting uses standard libraries (LightGBM, SciPy); the contribution is the feature engineering, the anti-degeneracy guards, the skew diagnosis, the calibration discipline, and the safety layers.</p>
+<p>Metrics are backtest/validation on historical data; ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), not a full public launch, so these are model-quality backtest results, not live trading P&amp;L. The heavy numerical lifting uses standard libraries (LightGBM, SciPy); the contribution is the feature engineering, the anti-degeneracy guards, the skew diagnosis, the calibration discipline, and the safety layers.</p>
   </div>
 </article>
 <footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>

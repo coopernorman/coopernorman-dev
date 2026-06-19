@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seven agents that defend a market, without a central brain — Cooper Norman</title>
-<meta name="description" content="TL;DR ShareShark's pricing model only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model ">
+<meta name="description" content="TL;DR ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, bu">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -24,7 +24,7 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>ShareShark's pricing model only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively <strong>blind</strong>. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of <strong>seven cooperating Claude-powered agents</strong> that watch company news, the macro tape, and the order flow 24/7, coordinating <em>without</em> a central controller, treating every model output as untrusted, and rolled out in shadow mode before they ever touched a live price. The interesting part isn't any single LLM call; it's the <strong>systems design around the LLM.</strong></p>
+<p>ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively <strong>blind</strong>. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of <strong>seven cooperating Claude-powered agents</strong> that watch company news, the macro tape, and the order flow 24/7, coordinating <em>without</em> a central controller, treating every model output as untrusted, and rolled out in shadow mode before they ever touched a live price. The interesting part isn't any single LLM call; it's the <strong>systems design around the LLM.</strong></p>
 <hr />
 <h2>The problem: a blind model is an exploitable model</h2>
 <p>On a prediction platform the price <em>is</em> a probability, and that price is only as good as the data behind it. The pricing model refreshes from live options/market data during market hours, but entries stay open overnight, on weekends, and on holidays, when the model can't see anything new. The moment material news breaks in a blind window, the posted line is stale, and the first person to notice can print money off it. The whole agent suite exists to shrink that exploitable window.</p>
@@ -65,7 +65,7 @@
 <h2>Tech stack</h2>
 <p>Python 3.12 · Django / DRF · Celery + Beat / Redis · Anthropic Claude SDK (Haiku + Sonnet, web-search tool) · Marketaux / StockNewsAPI · yfinance · exchange_calendars (NYSE) · Discord alerting · AWS EC2 (staging + prod).</p>
 <h2>Honest notes</h2>
-<p>ShareShark operated pre-launch / low-traffic, so this is design-and-shadow-validation work, not "battle-tested at scale." Cost figures are <strong>design targets</strong> from code, not billed actuals. There is <strong>no realized P&amp;L</strong> here: these are risk-<em>protection</em> systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.</p>
+<p>ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), with these agents validated in shadow mode, so this is design-and-shadow-validation work, not "battle-tested at scale." Cost figures are <strong>design targets</strong> from code, not billed actuals. There is <strong>no realized P&amp;L</strong> here: these are risk-<em>protection</em> systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.</p>
   </div>
 </article>
 <footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
