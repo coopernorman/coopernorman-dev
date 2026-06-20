@@ -45,6 +45,9 @@ TJX went **up**, past even my bullish $98 estimate. The short was wrong, and the
 - **A terminal-growth DCF is hypersensitive to the growth input**, and mine came from a loose source. The sensitivity table even showed how much the call swung on that one cell. The honest move is to anchor the most-sensitive input the most rigorously, not the least.
 - **Respect the base rate.** High-quality compounders with durable models (which TJX is) tend to keep compounding; shorting that needs a sharper catalyst than "the multiple looks full."
 
+## The other side of the ledger
+TJX was a miss, but it's one of several company DCFs I built, and the process produces hits too. A model I ran on **PulteGroup** (the homebuilder) around the same period implied meaningful upside against the price in the model, a long call that the stock went on to vindicate as homebuilders rallied. I'm featuring the TJX *miss* rather than the PulteGroup *hit* on purpose: the wrong call is where the useful lessons live, and an analyst who can tell you exactly why they were wrong is more trustworthy than one who only shows the wins.
+
 ## What I learned
 - **Real valuation mechanics:** a linked three-statement model, CAPM/WACC, dual terminal-value methods, a comps set, and two-way sensitivity analysis, built from the financials up.
 - **Intellectual honesty:** I documented the split, named my own weakest assumption, made the call, and then owned being wrong with specific lessons. That retrospective habit is the difference between an analyst who got lucky and one who improves.
