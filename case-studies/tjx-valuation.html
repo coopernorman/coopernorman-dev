@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valuing TJX two ways: a DCF, a split signal, and an honest retrospective — Cooper Norman</title>
+<meta name="description" content="TL;DR I built a full three-statement discounted-cash-flow model on TJX Companies (the off-price retailer behind T.J. Maxx, HomeGoods, and Marshalls) and va">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
+    <span class="links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#projects">Projects</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </span>
+  </div>
+</nav>
+<article class="article">
+  <div class="wrap">
+    <a class="back" href="../index.html#work">← All work</a>
+<h2>TL;DR</h2>
+<p>I built a full three-statement discounted-cash-flow model on <strong>TJX Companies</strong> (the off-price retailer behind T.J. Maxx, HomeGoods, and Marshalls) and valued it under two terminal-value assumptions that disagreed sharply: a perpetuity-growth DCF implied the stock was <strong>overvalued by ~39%</strong> ($54 vs a ~$89 price), while an exit-multiple (EV/EBIT) DCF, cross-checked against comparables, implied it was <strong>undervalued by ~11%</strong> ($98). I over-relied on the perpetuity-growth output and recommended a short. <strong>The market proved me wrong</strong> and TJX rose. I'm featuring this as a post-mortem: my own multiples method <em>and</em> the market both rejected my perpetuity DCF, and the lesson is reading that disagreement correctly instead of trusting the outlier.</p>
+<hr />
+<h2>The company and the call</h2>
+<p>TJX in October 2023: ~$89 per share, ~$104B market cap, the largest off-price apparel and home-goods retailer in the US. Consensus was bullish. One of my two terminal-value methods disagreed, and my written recommendation was <strong>short</strong>, framed as a low-conviction, exploratory idea rather than a high-conviction call.</p>
+<h2>The model (the mechanics matter)</h2>
+<p>A standard but fully-built <strong>three-statement model</strong>, not a single tab of guesses:
+- A linked <strong>income statement, balance sheet, and cash-flow statement</strong> feeding an unlevered free-cash-flow buildup (Revenue to EBIT to NOPAT, plus D&amp;A, less the change in net working capital, less CapEx).
+- A separate <strong>net-working-capital schedule</strong> projecting receivables, inventory, and payables as historical percentages of sales.
+- A <strong>CAPM cost of equity</strong> rolled into a market-value-weighted <strong>WACC of ~9.9%</strong> (blended ~9.6%), with a ~20% effective tax rate.
+- <strong>Two terminal-value methods</strong> so the valuation didn't hinge on one assumption: a perpetuity-growth terminal value and an exit-multiple terminal value.
+- A <strong>public-comparables sheet</strong> (Target, Walmart, Ross Stores, Five Below, Ollie's Bargain Outlet) across EV/EBITDA, EV/EBIT, P/E, and EV/Sales.
+- Two-way <strong>data-table sensitivities</strong> (WACC against terminal growth, and WACC against terminal multiple) so I could see the valuation surface, not just a point estimate.</p>
+<h2>The split signal</h2>
+<p>After tuning the model, the two terminal-value methods landed on opposite conclusions:</p>
+<p><img alt="Two methods, opposite calls: my TJX valuation (Oct 2023)" src="../assets/img/tjx_valuation_range.png" /></p>
+<ul>
+<li><strong>Perpetuity-growth DCF: $54.22</strong> implied, overvalued ~39% versus the $88.68 price. A short signal.</li>
+<li><strong>Exit-multiple DCF (EV/EBIT, set against the comparables): $98.30</strong> implied, undervalued ~11%. A buy signal.</li>
+</ul>
+<p>A wide spread between two terminal-value assumptions is itself information. I documented it openly in the writeup rather than quietly dropping the one I didn't like, and reasoned that "people are overestimating TJX's growth" was the thread connecting both.</p>
+<h2>The judgment, and the adjustments I made to it</h2>
+<p>I made three deliberate adjustments, and I want to be candid about each because two of them helped TJX and one of them is a real weak point:
+- <strong>Stripped 2021 from the historical averages</strong> (sales growth, EBIT margin, tax rate). COVID distorted that year, so excluding it is defensible, and it actually <em>raised</em> the implied price.
+- <strong>Switched the terminal multiple from EV/EBITDA to EV/EBIT.</strong> EBIT fit TJX's economics better and tightened the gap to the comps' median multiple. Also pushed the value <em>up</em>.
+- <strong>Raised revenue growth from 6.4% to 8.2%</strong>, based on a figure from a Yahoo Finance article. This is the soft spot: the 8.2% was a <em>cash-flow</em> growth number I applied to <em>revenue</em>, which is not a clean substitution. I flagged it in the writeup at the time, but a sharper version of me would not have leaned on a loosely-sourced input for the single most sensitive assumption in the model.</p>
+<p>Even after these upward adjustments, the perpetuity method <em>still</em> implied overvaluation, and that is the output I over-weighted into the short.</p>
+<h2>What actually happened, and what I'd do differently</h2>
+<p>TJX went <strong>up</strong>, past even my bullish $98 estimate. The short was wrong, and the method I underweighted (multiples) plus the market were right. Owning that is the whole reason this case study exists. What I take from it:
+- <strong>Weight methods by reliability, not by which confirms your thesis.</strong> When my own multiples method <em>and</em> the broad market both disagreed with my perpetuity DCF, that was a signal to distrust the outlier, not to follow it.
+- <strong>A terminal-growth DCF is hypersensitive to the growth input</strong>, and mine came from a loose source. The sensitivity table even showed how much the call swung on that one cell. The honest move is to anchor the most-sensitive input the most rigorously, not the least.
+- <strong>Respect the base rate.</strong> High-quality compounders with durable models (which TJX is) tend to keep compounding; shorting that needs a sharper catalyst than "the multiple looks full."</p>
+<h2>What I learned</h2>
+<ul>
+<li><strong>Real valuation mechanics:</strong> a linked three-statement model, CAPM/WACC, dual terminal-value methods, a comps set, and two-way sensitivity analysis, built from the financials up.</li>
+<li><strong>Intellectual honesty:</strong> I documented the split, named my own weakest assumption, made the call, and then owned being wrong with specific lessons. That retrospective habit is the difference between an analyst who got lucky and one who improves.</li>
+<li><strong>Judgment under disagreement:</strong> when two terminal-value methods point opposite ways, the move is to distrust the outlier, not to follow it. I learned that the hard way here.</li>
+</ul>
+<h2>Tools</h2>
+<p>Excel (three-statement model, CAPM/WACC, comparable-company analysis, two-way data-table sensitivities) and a written investment thesis.</p>
+<h2>Honest notes</h2>
+<p>This is an October 2023 analysis on a public company, done as independent valuation work; it is a student-to-early-analyst-grade model, not an institutional research product. The numbers above ($54.22 perpetuity, $98.30 EV/EBIT, $88.68 price) are from my own model and writeup at the time. The recommendation (short) was directionally wrong; I'm presenting it for the process and the retrospective, not as a winning call.</p>
+  </div>
+</article>
+<footer><div class="wrap">© 2026 Cooper Norman · coopernorman.dev</div></footer>
+</body>
+</html>
