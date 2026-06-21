@@ -37,7 +37,7 @@ A copula is only as good as the correlation matrix behind it, and a raw sample c
 - **Volatility-regime uplift.** Correlations spike in a crisis (everything sells off together). When 30-day volatility is above its 90th percentile, off-diagonal correlations are inflated by up to 15%, scaled by how stressed the regime is, using only data available at the time.
 - **Nearest-positive-definite repair.** Applying floors and uplift can break the matrix's positive-definiteness, which would make the copula unsamplable, so a Higham projection snaps it back to the nearest valid correlation matrix.
 
-The production matrix covers **334 stocks**, and the backtest replays **73 monthly snapshots from 2020 through 2026**, each rebuilt using only data available as of that month.
+The production matrix covers **334 of the 342 stocks** in the pricing universe (those with enough shared history to estimate a stable correlation), and the backtest replays **73 monthly snapshots from 2020 through 2026**, each rebuilt using only data available as of that month.
 
 ## Does it work?
 The validation is honest about what it is: synthetic multi-leg entries built from the real model's per-leg probabilities on the held-out test set, priced against the historical correlation matrices, then scored on the realized outcomes. No live money is involved. The realistic test models actual user behavior: only favorites (per-leg probability above 0.30), with legs added until the payout would breach the 20x cap.

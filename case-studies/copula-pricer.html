@@ -51,7 +51,7 @@
 <li><strong>Volatility-regime uplift.</strong> Correlations spike in a crisis (everything sells off together). When 30-day volatility is above its 90th percentile, off-diagonal correlations are inflated by up to 15%, scaled by how stressed the regime is, using only data available at the time.</li>
 <li><strong>Nearest-positive-definite repair.</strong> Applying floors and uplift can break the matrix's positive-definiteness, which would make the copula unsamplable, so a Higham projection snaps it back to the nearest valid correlation matrix.</li>
 </ul>
-<p>The production matrix covers <strong>334 stocks</strong>, and the backtest replays <strong>73 monthly snapshots from 2020 through 2026</strong>, each rebuilt using only data available as of that month.</p>
+<p>The production matrix covers <strong>334 of the 342 stocks</strong> in the pricing universe (those with enough shared history to estimate a stable correlation), and the backtest replays <strong>73 monthly snapshots from 2020 through 2026</strong>, each rebuilt using only data available as of that month.</p>
 <h2>Does it work?</h2>
 <p>The validation is honest about what it is: synthetic multi-leg entries built from the real model's per-leg probabilities on the held-out test set, priced against the historical correlation matrices, then scored on the realized outcomes. No live money is involved. The realistic test models actual user behavior: only favorites (per-leg probability above 0.30), with legs added until the payout would breach the 20x cap.</p>
 <ul>
