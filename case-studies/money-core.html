@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shipping a regulated-money stack, solo — Cooper Norman</title>
-<meta name="description" content="TL;DR The hard part of a real-money platform isn't the database: it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, ta">
+<meta name="description" content="TL;DR A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -24,7 +24,7 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>The hard part of a real-money platform isn't the database: it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated the entire money-and-compliance stack of <strong>ShareShark</strong> (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.</p>
+<p>A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated the entire money-and-compliance stack of <strong>ShareShark</strong> (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.</p>
 <h2>The problem</h2>
 <p>On a money platform, the expensive failures live at the <strong>seams</strong>, where your code meets a payment processor, an identity vendor, a geolocation API, a webhook you didn't send. Real cash leaving to an unverified, geo-ineligible, or fraudulent user is the failure that actually costs you. So the design rule was simple: <strong>every external rail fails closed</strong>, and money only moves once every check has passed.</p>
 <h2>The ACH payout lifecycle (idempotent, fail-closed)</h2>
@@ -32,7 +32,7 @@
 <p><img alt="ACH payout lifecycle" src="../assets/img/payout_state_machine.png" /></p>
 <h2>The clever part: geofencing that doesn't punish real users</h2>
 <p>State-by-state eligibility means IP geolocation, but <strong>strict IP gating has a brutal failure mode</strong>. Cellular carriers route users through CGNAT pools that can resolve to a neighboring (sometimes ineligible) state, and VPN-detection false-fires on ordinary privacy browsers. Naive geofencing quietly blocks <em>legitimate</em> users on their phones.</p>
-<p>So I built a tiered pipeline: a fast local MaxMind lookup first, a paid precision API only as a second opinion (to conserve credits), and an <strong>authoritative browser-GPS override</strong> that settles eligibility regardless of what the IP says, plus confidence-tiered VPN handling (hard-block relay/Tor, log-but-allow soft signals). Compliance stays strict; real users stop getting wrongly turned away. <em>Keeping the gate tight without locking out real customers is the part most people get wrong.</em></p>
+<p>So I built a tiered pipeline: a fast local MaxMind lookup first, a paid precision API only as a second opinion (to conserve credits), and an <strong>authoritative browser-GPS override</strong> that settles eligibility regardless of what the IP says, plus confidence-tiered VPN handling (hard-block relay/Tor, log-but-allow soft signals). Compliance stays strict; real users stop getting wrongly turned away. Keeping the gate tight without locking out real customers is where most naive implementations fall down.</p>
 <h2>Identity, encryption, and tax</h2>
 <ul>
 <li><strong>KYC (Veriff):</strong> government-ID + selfie/liveness, triggered at identity, tax, and velocity thresholds (plus random audit), with <strong>fail-closed, constant-time HMAC</strong> webhook verification so a forged "approved" callback can't slip through.</li>

@@ -5,7 +5,7 @@
 ---
 
 ## TL;DR
-The hard part of a real-money platform isn't the database: it's wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails *safely*. I built and operated the entire money-and-compliance stack of **ShareShark** (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.
+A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails *safely*. I built and operated the entire money-and-compliance stack of **ShareShark** (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.
 
 ## The problem
 On a money platform, the expensive failures live at the **seams**, where your code meets a payment processor, an identity vendor, a geolocation API, a webhook you didn't send. Real cash leaving to an unverified, geo-ineligible, or fraudulent user is the failure that actually costs you. So the design rule was simple: **every external rail fails closed**, and money only moves once every check has passed.
@@ -18,7 +18,7 @@ Withdrawals move real cash through an ACH provider (Payliance) as a state machin
 ## The clever part: geofencing that doesn't punish real users
 State-by-state eligibility means IP geolocation, but **strict IP gating has a brutal failure mode**. Cellular carriers route users through CGNAT pools that can resolve to a neighboring (sometimes ineligible) state, and VPN-detection false-fires on ordinary privacy browsers. Naive geofencing quietly blocks *legitimate* users on their phones.
 
-So I built a tiered pipeline: a fast local MaxMind lookup first, a paid precision API only as a second opinion (to conserve credits), and an **authoritative browser-GPS override** that settles eligibility regardless of what the IP says, plus confidence-tiered VPN handling (hard-block relay/Tor, log-but-allow soft signals). Compliance stays strict; real users stop getting wrongly turned away. *Keeping the gate tight without locking out real customers is the part most people get wrong.*
+So I built a tiered pipeline: a fast local MaxMind lookup first, a paid precision API only as a second opinion (to conserve credits), and an **authoritative browser-GPS override** that settles eligibility regardless of what the IP says, plus confidence-tiered VPN handling (hard-block relay/Tor, log-but-allow soft signals). Compliance stays strict; real users stop getting wrongly turned away. Keeping the gate tight without locking out real customers is where most naive implementations fall down.
 
 ## Identity, encryption, and tax
 - **KYC (Veriff):** government-ID + selfie/liveness, triggered at identity, tax, and velocity thresholds (plus random audit), with **fail-closed, constant-time HMAC** webhook verification so a forged "approved" callback can't slip through.

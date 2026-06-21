@@ -59,7 +59,7 @@
 <li><strong>Margin-positive everywhere, and tightest where it matters.</strong> Margin here is the negative of the user's expected value per $1 of entry, so positive margin means the price is not exploitable. Across every bucket I sliced (by sector mix and by leg count, 2 through 5 legs) the copula keeps that margin positive. Crucially, on the same-sector same-direction "exploit" entries (n=1,763), it recovers an extra <strong>0.043 per $1</strong> versus naive pricing, exactly the place where independence pricing thins toward exploitable.</li>
 </ul>
 <p><img alt="The copula restores margin where naive pricing leaks it (favorites-only backtest, 9,039 entries)" src="../assets/img/parlay_margin.png" /></p>
-<p>The honest nuance: the copula is conservative <em>everywhere</em> by design (the CI upper bound, the cross-sector floor, and the regime uplift all nudge it the same way), so it tightens cross-sector entries a little too. But it tightens correlated, same-direction entries the most, which is the entire goal.</p>
+<p>The honest nuance: the copula is conservative <em>everywhere</em> by design (the CI upper bound, the cross-sector floor, and the regime uplift all nudge it the same way), so it tightens cross-sector entries a little too. But it tightens correlated, same-direction entries the most, which is what the engine is built to do.</p>
 <h2>Engineering</h2>
 <ul>
 <li><strong>Vectorized Monte Carlo.</strong> The whole M-by-N simulation is numpy matmul and broadcasting with <code>int8</code> outcome arrays, so even the 2-million-sim case prices in well under a second.</li>

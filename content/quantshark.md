@@ -10,7 +10,7 @@ I built the pricing brain of **ShareShark**, a real-money, dual-currency sweepst
 ---
 
 ## The problem
-On a prediction platform, **the price *is* the product**, and the price is just a probability: odds = 1 / P(in-the-money). That means a model that's *accurate on average* but *miscalibrated* is worse than useless: if it says 80% when the truth is 42%, every user who notices prints money off you.
+On a prediction platform, **the price *is* the product**, and that price is just a probability in disguise: odds = 1 / P(in-the-money). That means a model that's *accurate on average* but *miscalibrated* is worse than useless: if it says 80% when the truth is 42%, every user who notices prints money off you.
 
 So the goal wasn't "high accuracy." It was **trustworthy probabilities across the whole distribution**, plus guardrails for the cases where any model eventually misbehaves.
 

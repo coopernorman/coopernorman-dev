@@ -1,4 +1,4 @@
-# Valuing TJX two ways: a DCF, a split signal, and an honest retrospective
+# Valuing TJX two ways: a DCF, a split signal, and a retrospective on a wrong call
 
 *Portfolio case study for coopernorman.dev. An equity-valuation writeup from October 2023. Public-safe: my own analysis on public companies; no non-public information.*
 
@@ -42,7 +42,7 @@ Even after these upward adjustments, the perpetuity method *still* implied overv
 ## What actually happened, and what I'd do differently
 TJX went **up**, past even my bullish $98 estimate. The short was wrong, and the method I underweighted (multiples) plus the market were right. Owning that is the whole reason this case study exists. What I take from it:
 - **Weight methods by reliability, not by which confirms your thesis.** When my own multiples method *and* the broad market both disagreed with my perpetuity DCF, that was a signal to distrust the outlier, not to follow it.
-- **A terminal-growth DCF is hypersensitive to the growth input**, and mine came from a loose source. The sensitivity table even showed how much the call swung on that one cell. The honest move is to anchor the most-sensitive input the most rigorously, not the least.
+- **A terminal-growth DCF is hypersensitive to the growth input**, and mine came from a loose source. The sensitivity table even showed how much the call swung on that one cell. The right move is to anchor the most-sensitive input the most rigorously, not the least.
 - **Respect the base rate.** High-quality compounders with durable models (which TJX is) tend to keep compounding; shorting that needs a sharper catalyst than "the multiple looks full."
 
 ## The other side of the ledger

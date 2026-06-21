@@ -24,10 +24,10 @@
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
 <h2>TL;DR</h2>
-<p>While building ShareShark's options-pricing engine I twice hypothesized that <strong>more specialized models</strong> would price better: first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: <strong>one robust model covering the whole short-dated range wins, on accuracy <em>and</em> on production simplicity.</strong> I shipped the single model and deleted the rest.</p>
+<p>While building ShareShark's options-pricing engine I twice hypothesized that <strong>more specialized models</strong> would price better: first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: <strong>one model covering the whole short-dated range wins, on accuracy <em>and</em> on production simplicity.</strong> I shipped the single model and deleted the rest.</p>
 <hr />
 <h2>Why it was tempting</h2>
-<p>On a prediction platform the price <em>is</em> a probability, so pricing quality is everything, and two "more clever = better" instincts looked obviously right:</p>
+<p>On a prediction platform a price encodes a probability, so pricing quality is everything, and two "more clever = better" instincts looked obviously right:</p>
 <ol>
 <li><strong>Timing windows.</strong> Weekend and after-hours prices lean on Bitcoin snapshots captured at specific times (Fri 4pm, Sat 8am, Sun 8am, Sun 6:45pm) versus a normal weekday 4pm close. Each window carries different information → so train a model per window.</li>
 <li><strong>Horizon specialization.</strong> An option expiring <em>today</em> (1 day to expiry) behaves differently from one expiring in a week → so a dedicated end-of-day (EOD) specialist should beat a generalist on EOD contracts.</li>
@@ -115,13 +115,13 @@
 </table>
 <p>DTE-1 is the <em>one</em> regime where Black-Scholes is already strongest, so a learned model had almost no room to add value, and the heavy residual variant destabilized completely. The augmentation was genuinely clever; the conclusion was still <strong>"don't ship this."</strong></p>
 <blockquote>
-<p>The trap I had to avoid: on its <em>own</em> synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss, but that's an easier task scored on different data. The <em>fair</em> comparison is EOD vs. Black-Scholes on the real test set, where it lost. Knowing which comparison is honest is the whole game.</p>
+<p>The trap I had to avoid: on its <em>own</em> synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss, but that's an easier task scored on different data. The <em>fair</em> comparison is EOD vs. Black-Scholes on the real test set, where it lost. Picking the comparison that's actually honest is what decides the call.</p>
 </blockquote>
 <p><img alt="EOD specialist vs. the general model, each scored against its own Black-Scholes baseline (backtest)" src="../assets/img/model_consolidation_comparison_real.png" /></p>
 <h2>What won: one robust short-DTE model</h2>
 <p>A single model covering the full short-dated range (DTE 1–5/1–7) on <strong>real</strong> expiry labels: what shipped as the production EOW model. It won on every axis:</p>
 <ul>
-<li><strong>Accuracy &amp; calibration (backtest):</strong> AUC <strong>0.979</strong>, log-loss <strong>0.171</strong>, expected-calibration-error <strong>0.0021</strong>, versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.</li>
+<li><strong>Accuracy &amp; calibration (backtest):</strong> on the full backtest (a broader test set than the specialist-comparison subset in Experiment 1), AUC <strong>0.979</strong>, log-loss <strong>0.171</strong>, expected-calibration-error <strong>0.0021</strong>, versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.</li>
 <li><strong>Production simplicity:</strong> one model, one data pipeline, no snapshot-routing logic, no synthetic-data step. Easier to serve in real time, far fewer failure modes, one thing to monitor.</li>
 </ul>
 <p><img alt="The shipped model beats Black-Scholes log-loss in every market regime (backtest)" src="../assets/img/regime_calibration_real.png" /></p>

@@ -5,12 +5,12 @@
 ---
 
 ## TL;DR
-While building ShareShark's options-pricing engine I twice hypothesized that **more specialized models** would price better: first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: **one robust model covering the whole short-dated range wins, on accuracy *and* on production simplicity.** I shipped the single model and deleted the rest.
+While building ShareShark's options-pricing engine I twice hypothesized that **more specialized models** would price better: first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: **one model covering the whole short-dated range wins, on accuracy *and* on production simplicity.** I shipped the single model and deleted the rest.
 
 ---
 
 ## Why it was tempting
-On a prediction platform the price *is* a probability, so pricing quality is everything, and two "more clever = better" instincts looked obviously right:
+On a prediction platform a price encodes a probability, so pricing quality is everything, and two "more clever = better" instincts looked obviously right:
 
 1. **Timing windows.** Weekend and after-hours prices lean on Bitcoin snapshots captured at specific times (Fri 4pm, Sat 8am, Sun 8am, Sun 6:45pm) versus a normal weekday 4pm close. Each window carries different information → so train a model per window.
 2. **Horizon specialization.** An option expiring *today* (1 day to expiry) behaves differently from one expiring in a week → so a dedicated end-of-day (EOD) specialist should beat a generalist on EOD contracts.
@@ -49,14 +49,14 @@ The honest result: **every EOD variant lost to plain Black-Scholes on the real t
 
 DTE-1 is the *one* regime where Black-Scholes is already strongest, so a learned model had almost no room to add value, and the heavy residual variant destabilized completely. The augmentation was genuinely clever; the conclusion was still **"don't ship this."**
 
-> The trap I had to avoid: on its *own* synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss, but that's an easier task scored on different data. The *fair* comparison is EOD vs. Black-Scholes on the real test set, where it lost. Knowing which comparison is honest is the whole game.
+> The trap I had to avoid: on its *own* synthetic DTE-1 dataset the EOD model posted a gorgeous-looking log-loss, but that's an easier task scored on different data. The *fair* comparison is EOD vs. Black-Scholes on the real test set, where it lost. Picking the comparison that's actually honest is what decides the call.
 
 ![EOD specialist vs. the general model, each scored against its own Black-Scholes baseline (backtest)](figures/model_consolidation_comparison_real.png)
 
 ## What won: one robust short-DTE model
 A single model covering the full short-dated range (DTE 1–5/1–7) on **real** expiry labels: what shipped as the production EOW model. It won on every axis:
 
-- **Accuracy & calibration (backtest):** AUC **0.979**, log-loss **0.171**, expected-calibration-error **0.0021**, versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.
+- **Accuracy & calibration (backtest):** on the full backtest (a broader test set than the specialist-comparison subset in Experiment 1), AUC **0.979**, log-loss **0.171**, expected-calibration-error **0.0021**, versus a Black-Scholes baseline at AUC 0.973, log-loss 0.207, ECE 0.040. The single model's calibration was an order of magnitude better than Black-Scholes.
 - **Production simplicity:** one model, one data pipeline, no snapshot-routing logic, no synthetic-data step. Easier to serve in real time, far fewer failure modes, one thing to monitor.
 
 ![The shipped model beats Black-Scholes log-loss in every market regime (backtest)](figures/regime_calibration_real.png)

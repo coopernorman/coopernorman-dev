@@ -47,7 +47,7 @@ The validation is honest about what it is: synthetic multi-leg entries built fro
 
 ![The copula restores margin where naive pricing leaks it (favorites-only backtest, 9,039 entries)](figures/parlay_margin.png)
 
-The honest nuance: the copula is conservative *everywhere* by design (the CI upper bound, the cross-sector floor, and the regime uplift all nudge it the same way), so it tightens cross-sector entries a little too. But it tightens correlated, same-direction entries the most, which is the entire goal.
+The honest nuance: the copula is conservative *everywhere* by design (the CI upper bound, the cross-sector floor, and the regime uplift all nudge it the same way), so it tightens cross-sector entries a little too. But it tightens correlated, same-direction entries the most, which is what the engine is built to do.
 
 ## Engineering
 - **Vectorized Monte Carlo.** The whole M-by-N simulation is numpy matmul and broadcasting with `int8` outcome arrays, so even the 2-million-sim case prices in well under a second.
