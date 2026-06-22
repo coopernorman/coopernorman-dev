@@ -1,11 +1,11 @@
 # A seven-agent suite: five defend a market, two run ops, no central brain
 
-*Portfolio case study for coopernorman.dev. Public-safe: a pre-launch, shadow-validated system; figures are design targets, not billed actuals; no realized P&L; no secrets.*
+*Portfolio case study for coopernorman.dev. Public-safe: an operational risk system run at soft-launch scale; figures are design targets, not billed actuals; no realized P&L; no secrets.*
 
 ---
 
 ## TL;DR
-ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively **blind**. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of **seven cooperating Claude-powered agents**: five watch company news, the macro tape, and the order flow 24/7 to protect the market, while two handle ops and growth (social posts and contest scoring). They coordinate *without* a central controller, treat every model output as untrusted, and rolled out in shadow mode before they ever touched a live price. No single LLM call is the clever bit here; what matters is the **systems design around the LLM.**
+ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively **blind**. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of **seven cooperating Claude-powered agents**: five watch company news, the macro tape, and the order flow 24/7 to protect the market, while two handle ops and growth (social posts and contest scoring). They coordinate *without* a central controller, treat every model output as untrusted, and run in production with a full decision audit trail behind every price move. No single LLM call is the clever bit here; what matters is the **systems design around the LLM.**
 
 ---
 
@@ -41,7 +41,7 @@ Rather than reacting to "futures are +0.5% vs. prior close," the system reasons 
 Claude's JSON recommendations move the prices users play against, so its output is validated like hostile input: layered JSON extraction (whole-string → code-fence → brace-matching), enum validation, range **clamping** (e.g. multipliers bounded to [0.50, 1.10]), an invariant that the two sides of a market can never both exceed 1.0 (which would let users profit risk-free either way), and safe defaults (`MANUAL_REVIEW`) on any parse failure. **The agent can be wrong; it can never produce an unsafe or unparseable action.**
 
 ## Shipping it safely
-Every agent ran in **shadow mode** (log + Discord alert, no action) for 1–2 weeks, reviewed against a full decision audit trail (every decision persisted, *including the IGNOREs*, so I could tune prompts and study false positives), then a single flag flipped it live. Heartbeats plus a watchdog fire an emergency alert if an agent goes silent, and alerts are environment-tagged across staging and prod.
+Every decision is persisted to a full audit trail (*including the IGNOREs*), so I could tune prompts and study false positives against real production behavior. Heartbeats plus a watchdog fire an emergency alert if an agent goes silent, and alerts are environment-tagged across staging and prod.
 
 ## What this demonstrates
 - **Production applied-AI engineering, not a chatbot wrapper:** cost architecture, guardrails, orchestration, and observability around the model.
@@ -49,11 +49,11 @@ Every agent ran in **shadow mode** (log + Discord alert, no action) for 1–2 we
 - **Multi-agent coordination without a central brain.**
 - **Domain modeling:** market-time mechanics, data-staleness reasoning, market-maker-style price-shading.
 
-## Scale & shape (design / shadow-validated)
+## Scale & shape (production)
 **14,600 lines of Python across 77 files**; **7 agents**; **2 Claude models** (Haiku 4.5 triage, Sonnet 4.6 analysis) plus the hosted web-search tool. News Guardian runs every 5 minutes, 24/7; 61–71 tickers scanned per macro run; 11 futures/indices monitored.
 
 ## Tech stack
 Python 3.12 · Django / DRF · Celery + Beat / Redis · Anthropic Claude SDK (Haiku + Sonnet, web-search tool) · Marketaux / StockNewsAPI · yfinance · exchange_calendars (NYSE) · Discord alerting · AWS EC2 (staging + prod).
 
 ## Honest notes
-ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), with these agents validated in shadow mode, so this is design-and-shadow-validation work, not "battle-tested at scale." Any cost characterizations are rough design targets from the code, not billed actuals. There is **no realized P&L** here: these are risk-*protection* systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.
+ShareShark ran a year of free-to-play and a small real-money soft launch (~50 users), with these agents operating in production at that scale, so this is real but small-scale operation, not "battle-tested at large scale." Any cost characterizations are rough design targets from the code, not billed actuals. There is **no realized P&L** here: these are risk-*protection* systems, and the platform's pricing margin and risk caps are design parameters, not earnings. Heavy lifting is shared by the Anthropic SDK + hosted web-search, the news/market-data vendors, Celery, and Django; the contribution is the orchestration, prompts, guardrails, risk modeling, and operational hardening. Some roadmap items (real-time price nudge at placement, graph-based collusion detection, formal VaR) are scoped, not shipped.
