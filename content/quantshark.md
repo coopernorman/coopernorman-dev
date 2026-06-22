@@ -1,4 +1,4 @@
-# Case Study, QuantShark: pricing short-dated options with a calibrated model + a safety net
+# Pricing predictions with a calibrated model that beats Black-Scholes
 
 *Portfolio case study for coopernorman.dev. Public-safe: all performance figures are backtest/validation; no realized P&L; no secrets.*
 

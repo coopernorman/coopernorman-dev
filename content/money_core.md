@@ -1,4 +1,4 @@
-# Shipping a regulated-money stack, solo
+# The entire payments-and-compliance stack, built solo
 
 *Portfolio case study for coopernorman.dev. Public-safe: no realized P&L, no secrets/PII; the diagram is conceptual.*
 

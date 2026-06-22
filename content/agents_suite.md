@@ -1,4 +1,4 @@
-# A seven-agent suite: five defend a market, two run ops, no central brain
+# Seven Claude agents, no central orchestrator, guarding a live market
 
 *Portfolio case study for coopernorman.dev. Public-safe: an operational risk system run at soft-launch scale; figures are design targets, not billed actuals; no realized P&L; no secrets.*
 

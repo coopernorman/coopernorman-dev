@@ -1,4 +1,4 @@
-# One model, not seven: letting backtests kill my own hypotheses
+# One model, not five: letting backtests kill my own hypotheses
 
 *Portfolio case study for coopernorman.dev. Public-safe: all performance figures are backtest/validation; no realized P&L; no secrets.*
 

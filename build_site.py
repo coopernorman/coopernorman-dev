@@ -37,7 +37,6 @@ HEADER = """<!DOCTYPE html>
     <a class="brand" href="../index.html" style="color:var(--ink)">Cooper Norman</a>
     <span class="links">
       <a href="../index.html#work">Work</a>
-      <a href="../index.html#projects">Projects</a>
       <a href="../index.html#about">About</a>
       <a href="../index.html#contact">Contact</a>
     </span>
