@@ -1,4 +1,4 @@
-# Naive independence is an arbitrage: pricing correlated multi-leg predictions with a t-copula
+# Naive independence leaks edge: pricing correlated multi-leg predictions with a t-copula
 
 *Portfolio case study for coopernorman.dev. Public-safe: all figures are backtest/validation on synthetic combinations priced against historical correlations; no realized P&L, no secrets.*
 

@@ -47,7 +47,7 @@ Even a 0.979-AUC model occasionally extrapolates badly in the deep-out-of-the-mo
 ![The delta-ceiling: final odds = min(model, analytic bound)](figures/quantshark_delta_ceiling.png)
 
 ## Bonus: pricing correlated multi-leg entries
-Users could combine multiple predictions, which are **not independent** (two tech megacaps move together). Naive independence would systematically misprice them and hand out arbitrage. So multi-leg prices come from a **t-Copula Monte Carlo** simulation (Student-t for fat tails) over a correlation matrix stabilized with **Ledoit-Wolf shrinkage**, sector correlation floors, a volatility-regime uplift, and a nearest-positive-definite repair, priced conservatively on the **97.5%-CI upper bound** of joint probability.
+Users could combine multiple predictions, which are **not independent** (two tech megacaps move together). Naive independence would systematically misprice them and leak edge. So multi-leg prices come from a **t-Copula Monte Carlo** simulation (Student-t for fat tails) over a correlation matrix stabilized with **Ledoit-Wolf shrinkage**, sector correlation floors, a volatility-regime uplift, and a nearest-positive-definite repair, priced conservatively on the **97.5%-CI upper bound** of joint probability.
 
 ## Validation methodology
 Every figure here is **out-of-sample**. The model was evaluated on a **temporal split** (train on earlier periods, validate on later, held-out periods) to prevent look-ahead leakage. I report **calibration (ECE/MCE)**, **proper scores (log-loss, Brier)**, and **ranking (AUC)** on the held-out period, and confirmed the weekend-skew fix by **ablation** (toggling the zero-fill augmentation), not just by watching an aggregate number move.
