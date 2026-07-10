@@ -1,4 +1,4 @@
-# The hard part was never the model: building a leak-proof data pipeline from six vendors
+# The hard part was never the model: building a leak-proof data pipeline from six data sources
 
 *Portfolio case study for coopernorman.dev. Public-safe: describes methodology and architecture only; no secrets, no vendor keys, no realized P&L.*
 

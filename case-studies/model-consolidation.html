@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One model, not five: letting backtests kill my own hypotheses — Cooper Norman</title>
 <meta name="description" content="TL;DR While building ShareShark's options-pricing engine I twice hypothesized that more specialized models would price better: first a separate model per m">
+<meta property="og:title" content="One model, not five: letting backtests kill my own hypotheses — Cooper Norman">
+<meta property="og:description" content="TL;DR While building ShareShark's options-pricing engine I twice hypothesized that more specialized models would price better: first a separate model per m">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/model-consolidation.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>One model, not five: letting backtests kill my own hypotheses</h1>
 <h2>TL;DR</h2>
 <p>While building ShareShark's options-pricing engine I twice hypothesized that <strong>more specialized models</strong> would price better: first a separate model per market-timing window, then a dedicated end-of-day model trained on synthetic data. Both times I built the specialized version, backtested it honestly against a fair baseline, and the data said the same thing: <strong>one model covering the whole short-dated range wins, on accuracy <em>and</em> on production simplicity.</strong> I shipped the single model and deleted the rest.</p>
 <hr />

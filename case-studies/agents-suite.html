@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seven Claude agents, no central orchestrator, guarding a live market — Cooper Norman</title>
 <meta name="description" content="TL;DR ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, bu">
+<meta property="og:title" content="Seven Claude agents, no central orchestrator, guarding a live market — Cooper Norman">
+<meta property="og:description" content="TL;DR ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, bu">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/agents-suite.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>Seven Claude agents, no central orchestrator, guarding a live market</h1>
 <h2>TL;DR</h2>
 <p>ShareShark (a real-money, dual-currency sweepstakes prediction platform) prices off a model that only sees fresh market data during trading hours, but users could place entries overnight and on weekends, when the model is effectively <strong>blind</strong>. If material news broke during a blind window, a sophisticated user could take the other side of a stale, mispriced price. To defend that, I built a suite of <strong>seven cooperating Claude-powered agents</strong>: five watch company news, the macro tape, and the order flow 24/7 to protect the market, while two handle ops and growth (social posts and contest scoring). They coordinate <em>without</em> a central controller, treat every model output as untrusted, and run in production with a full decision audit trail behind every price move. No single LLM call is the clever bit here; what matters is the <strong>systems design around the LLM.</strong></p>
 <hr />

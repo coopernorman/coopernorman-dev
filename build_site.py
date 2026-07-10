@@ -28,6 +28,10 @@ HEADER = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — Cooper Norman</title>
 <meta name="description" content="{desc}">
+<meta property="og:title" content="{title} — Cooper Norman">
+<meta property="og:description" content="{desc}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/{slug}.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -45,6 +49,8 @@ HEADER = """<!DOCTYPE html>
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>{title}</h1>
 """
 
 FOOTER = """
@@ -86,7 +92,7 @@ def build():
         title, body = clean(open(src, encoding="utf-8").read())
         html_body = markdown.markdown(body, extensions=["tables", "fenced_code", "sane_lists"])
         desc = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", html_body))[:155]
-        page = HEADER.format(title=title, desc=desc) + html_body + FOOTER
+        page = HEADER.format(title=title, desc=desc, slug=slug) + html_body + FOOTER
         out = os.path.join(ROOT, "case-studies", f"{slug}.html")
         open(out, "w", encoding="utf-8").write(page)
         print("built", os.path.relpath(out, ROOT))

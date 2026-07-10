@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The hard part was never the model: building a leak-proof data pipeline from six vendors — Cooper Norman</title>
+<title>The hard part was never the model: building a leak-proof data pipeline from six data sources — Cooper Norman</title>
 <meta name="description" content="TL;DR Everyone talks about the model. In practice, the LightGBM model that prices ShareShark's options is the tractable part: an off-the-shelf library and ">
+<meta property="og:title" content="The hard part was never the model: building a leak-proof data pipeline from six data sources — Cooper Norman">
+<meta property="og:description" content="TL;DR Everyone talks about the model. In practice, the LightGBM model that prices ShareShark's options is the tractable part: an off-the-shelf library and ">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/data-pipeline.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>The hard part was never the model: building a leak-proof data pipeline from six data sources</h1>
 <h2>TL;DR</h2>
 <p>Everyone talks about the model. In practice, the LightGBM model that prices ShareShark's options is the <em>tractable</em> part: an off-the-shelf library and a tuning loop that, however careful, was a well-understood problem. (That tuning was real work in its own right, see the <a href="quantshark.html">QuantShark case study</a>; the point is it was a <em>solved kind</em> of problem.) The part that actually decided whether the model worked was the <strong>data pipeline that fed it</strong>: six data sources from three different vendors, three incompatible timestamp formats, well over a million API pulls, and a wall of point-in-time-correctness rules built to close every leakage path I could find, so the model never trained on information it wouldn't have had at the time. That pipeline is <strong>342 tickers, ~8 years (2018-2026), 21.5M training rows, 167 engineered features</strong>, and it is where the real engineering lives. This case study is about the unglamorous 80%, because that 80% is the moat.</p>
 <hr />

@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The entire payments-and-compliance stack, built solo — Cooper Norman</title>
 <meta name="description" content="TL;DR A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud">
+<meta property="og:title" content="The entire payments-and-compliance stack, built solo — Cooper Norman">
+<meta property="og:description" content="TL;DR A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/money-core.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>The entire payments-and-compliance stack, built solo</h1>
 <h2>TL;DR</h2>
 <p>A real-money platform lives or dies on its integrations. The job is wiring together a dozen third-party rails (payments, identity, geolocation, fraud, tax) so that real cash only ever moves to the right person, and every rail fails <em>safely</em>. I built and operated the entire money-and-compliance stack of <strong>ShareShark</strong> (a real-money, dual-currency sweepstakes prediction platform) solo: an idempotent ACH payout lifecycle, KYC/AML gating, encrypted PII, year-end tax reporting, and multi-signal geofencing, including a fix for the false-positives that wrongly block legitimate users.</p>
 <h2>The problem</h2>

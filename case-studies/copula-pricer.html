@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Naive independence leaks edge: pricing correlated multi-leg predictions with a t-copula — Cooper Norman</title>
 <meta name="description" content="TL;DR On ShareShark, users could combine several stock predictions into one multi-leg entry that only pays if all legs win. The obvious way to price that i">
+<meta property="og:title" content="Naive independence leaks edge: pricing correlated multi-leg predictions with a t-copula — Cooper Norman">
+<meta property="og:description" content="TL;DR On ShareShark, users could combine several stock predictions into one multi-leg entry that only pays if all legs win. The obvious way to price that i">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/copula-pricer.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>Naive independence leaks edge: pricing correlated multi-leg predictions with a t-copula</h1>
 <h2>TL;DR</h2>
 <p>On ShareShark, users could combine several stock predictions into one multi-leg entry that only pays if <em>all</em> legs win. The obvious way to price that is to multiply the per-leg probabilities together. That is also a bug you can lose real money to: stocks are correlated, so picking three tech names all "higher" is really one prediction on tech, not three independent ones, and the joint probability of all of them winning is far higher than the product. Multiplying anyway overpays the user on exactly the entries a sharp player would build. I priced these with a <strong>Student-t copula Monte Carlo</strong> engine that estimates the <em>joint</em> probability under a regime-aware, shrinkage-stabilized correlation matrix. In a six-year backtest it stays margin-positive in every strategy bucket, and it widens the margin most precisely where naive pricing leaks it: on correlated, same-direction stacks.</p>
 <hr />

@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pricing predictions with a calibrated model that beats Black-Scholes — Cooper Norman</title>
 <meta name="description" content="TL;DR I built the pricing brain of ShareShark, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estima">
+<meta property="og:title" content="Pricing predictions with a calibrated model that beats Black-Scholes — Cooper Norman">
+<meta property="og:description" content="TL;DR I built the pricing brain of ShareShark, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estima">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://coopernorman.dev/case-studies/quantshark.html">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
@@ -22,6 +26,8 @@
 <article class="article">
   <div class="wrap">
     <a class="back" href="../index.html#work">← All work</a>
+    <p class="eyebrow" style="margin-top:1rem">Case study</p>
+    <h1>Pricing predictions with a calibrated model that beats Black-Scholes</h1>
 <h2>TL;DR</h2>
 <p>I built the pricing brain of <strong>ShareShark</strong>, a real-money, dual-currency sweepstakes prediction platform, solo. It's a gradient-boosted model that estimates the probability a short-dated stock option finishes in-the-money, wrapped in calibration checks and a model-free safety layer so a confident-but-wrong prediction can never become an exploitable price. In backtest it beat a Black-Scholes baseline on <strong>every</strong> metric, and <em>dominated</em> the one that matters most for a pricing product, calibration: <strong>expected-calibration-error 19× tighter (0.002 vs 0.040)</strong>, worst-case calibration error 18× tighter, plus 18% lower log-loss and a better Brier score.</p>
 <hr />
